@@ -29,9 +29,10 @@ library(readxl)
 ### Interactive 
 library(htmltools)
 library(swiRcharts)
-library(rCharts)
 library(highcharter)
 require(viridis)
+library(sp)     ## Provides basic spatial classes/methods, incl. SpatialLines
+library(rgeos)  
 
 # Personnes actives occupées de 15 ans ou plus selon la profession exercée (nomenclature: NSP 2000), le sexe et la nationalité
 raw.xls <- "data/su-f-40.02.03.02.01.03.20.xlsx"
@@ -40,16 +41,14 @@ column_names <- c('division',	'classe', 'groupe', 'genre', 'description',
 column_types <- c('text', 'text', 'text', 'numeric', 'text', 
                   'numeric', 'numeric', 'numeric', 'numeric', 'numeric')
 
+translation.file <- "input/Job gender - txt.csv"
+
 
 ## flip codes: men -> women
 code_sub.sante <- c("864.01", "861.03", "862.04", "865.03", "862.03", "862.07") # sante
-
 code_sub.edu  <- c("846.04", "843.01", "846.05") # education et enseignement 
-
-code_sub.sci  <- c("851.03", "851.01", "853.03") #sciences sociales, humaines, naturelles, physiques et exactes
-
+code_sub.sci  <- c("851.03", "851.01", "853.01") #sciences sociales, humaines, naturelles, physiques et exactes
 code_sub.art  <- c("822.01", "824.09", "824.07") # Professions artistiques
-
 code_sub.mgmt <- c( "711.04", "721.03", "721.02", "751.04", "751.02") #management, de l'administration, de la banque et des assurances et professions judiciaires
 #c("521.01", "521.03") # com
 
@@ -59,7 +58,6 @@ code_sub.nf <- c("861.01", "751.01", "721.04", "211.03")
 ### steady codes
 #2 Professions de l'industrie et des arts et métiers (sauf construction) # 3 Professions de la technique et de l'informatique # 4 Professions de la construction et de l'exploitation minière
 code_ste.man <- c("253.02", "311.04", "412.04", "211.02", "111.01", "291.03", "211.01", "532.04")  
-
 code.ste.wom <- c("844.01", "831.02", "862.01", "865.07", "812.01", "865.04", "862.08", "114.02", "845.01", "861.02")
 
 ```
@@ -94,11 +92,12 @@ data %<>% mutate(description = fct_reorder(description, as.numeric(code)))
 # drop some columns
 data %<>% select(-étrangers, -suisses, -share_suisses) %>%
   mutate(share_hommes = 1 - share_femmes)
-  
+
+txt <- loadTranslation(translation.file) 
 ```
 
 ```{r plot}
-code.sub <- "864.01"
+code.sub <- "751.02"
 #code.sub <- "253.02"
 lang <- 'FR'
 chart.height <- 200
@@ -118,9 +117,28 @@ plot_code <- function(data, code.sub) {
   dd.f <- dd %>% filter(sex == "femmes")
   
   dd.range <- dd %>% spread(sex, value)
-  # find intersect https://stackoverflow.com/questions/31404679/can-ggplot2-find-the-intersections-or-is-there-any-other-neat-way
-  f1 <- approxfun(dd %>% filter(sex == "femmes") %>% .$year, dd %>% filter(sex == "femmes") %>% .$value)
-  minV <- optimize(function(t0) abs(f1(t0) - 50), interval = range(dd %>% filter(sex == "femmes") %>% .$year))$minimum
+  
+  ### Find intersect ###
+  # 1 find intersect https://stackoverflow.com/questions/31404679/can-ggplot2-find-the-intersections-or-is-there-any-other-neat-way
+  # f1 <- approxfun(
+  #   dd %>% filter(sex == "femmes") %>% .$year, dd %>% filter(sex == "femmes") %>% .$value)
+  # #approx(dd %>% filter(sex == "femmes") %>% .$year, dd %>% filter(sex == "femmes") %>% .$value)
+  # f2 <- approxfun(
+  #   dd %>% filter(sex == "hommes") %>% .$year, dd %>% filter(sex == "hommes") %>% .$value)
+  # minV <- optimise(function(t0) abs(f1(t0) - f2(t0)),
+  #                  lower = min(dd %>% filter(sex == "femmes") %>% .$year), 
+  #                  upper = max(dd %>% filter(sex == "femmes") %>% .$year), 
+  #                  tol = 1e-100)$minimum
+  
+  # 2 using sp rgeos
+  #https://stackoverflow.com/questions/21647982/how-to-get-the-intersection-point-of-two-vector
+  f1 <-  SpatialLines(list(Lines(Line(
+    dd %>% filter(sex == "femmes", !is.na(value)) %>% select(-sex) %>% as.matrix()
+    ), "A")))
+  f2 <-  SpatialLines(list(Lines(Line(
+    dd %>% filter(sex == "hommes", !is.na(value)) %>% select(-sex) %>% as.matrix()
+    ), "A")))
+  minV <- coordinates(gIntersection(f1, f2))[1,'x']
   
   # if flip occurred
   flip <- F
@@ -130,7 +148,7 @@ plot_code <- function(data, code.sub) {
     its <- tibble(year = minV, femmes = 50, hommes = 50)
     
     dd.range1 <- bind_rows(
-      dd.range %>% filter(year < minV ),
+      dd.range %>% filter(year < minV, !is.na(femmes)),
       its
     )
     dd.range2 <- bind_rows(
@@ -151,7 +169,7 @@ plot_code <- function(data, code.sub) {
                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col2, 0.5)) %>%
       hc_add_series(dd, "line", hcaes(x = year, y = value, group= sex),
                     marker = list(enabled = F, 
-                                  states = list(hover = list(enabled = F))), lineWidth = 3, 
+                                  states = list(hover = list(enabled = F))), lineWidth = 1, 
                     color = c( "#b15953", "#4c6570"))
       
   } else {
@@ -160,7 +178,7 @@ plot_code <- function(data, code.sub) {
                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5)) %>%
       hc_add_series(dd, "line", hcaes(x = year, y = value, group= sex),
                     marker = list(enabled = F, 
-                                  states = list(hover = list(enabled = F))), lineWidth = 3, 
+                                  states = list(hover = list(enabled = F))), lineWidth = 1, 
                     color = c( "#b15953", "#4c6570"))
   }
   hc %>%
@@ -168,14 +186,14 @@ plot_code <- function(data, code.sub) {
     hc_legend(enabled = F) %>%
     hc_tooltip(enabled = F) %>%
     hc_yAxis(
-      floor = 0, ceiling = 100, tickAmount = 3, opposite = ifelse(lang == "AR", T, F),
+      min = 0, max = 100, tickAmount = 3, opposite = ifelse(lang == "AR", T, F),
       useHTML = T, labels = list(format = '{value} %', style = list(fontSize = "0.8em"))
     ) %>%
     hc_xAxis(
-      gridLineWidth = 1, lineColor = "#CEC6B9", gridZIndex = -1, tickLength = 0, 
+      gridLineWidth = 0.7, lineColor = "#CEC6B9", gridZIndex = -1, tickLength = 0, 
       labels = list(y = 13), reversed = ifelse(lang == "AR", T, F)) %>%
     hc_title(
-         text = as.character(jobLabel), style = list("fontSize" = "0.8em", "color" = '#193442'),
+         text = as.character(jobLabel), style = list("fontSize" = "1em", "color" = '#193442', fontWeight = "normal"),
           floating = T, align = ifelse(lang == "AR", "left", "right"), 
           useHTML = T, y = 7, x = ifelse(lang == "AR", 5, -5)
     )
@@ -184,35 +202,48 @@ plot_code <- function(data, code.sub) {
 
 ```{r plot grid chart}
 code_sub.sante
-code_sub.edu <
-code_sub.sci <
-code_sub.art <
+code_sub.edu 
+code_sub.sci 
+code_sub.art 
 code_sub.mgmt 
 
- #for(lang in colnames(txt)) {
-    
-plots <- code_sub.sante %>% map(~ plot_code(data, .x))
-#plots <- lapply(code_sub.sante), function(iso) plotArea(dd, iso))
-    
-    source <- paste0(
-      txt['source', lang], ": ", htmlLink( "http://nccr-onthemove.ch/home/", txt['source.name', lang] ), " | ",
-      txt['code', lang], ": ", htmlLink("https://github.com/jbkunst/highcharter", txt['code.name', lang]),
-      " | swissinfo.ch"
-    )
-    
-    save_html(
-      tags$html(
-        tags$head(includeHTML(style_swi_highcharter())),
-        tags$h2(HTML(txt["main.title", lang])),
-        div(class = "descr", HTML(paste0('<img src="https://interactive.swissinfo.ch/assets/Interactive_icon.svg.png" width="12" align="top">&nbsp; ', txt["descr1", lang], "<br>",  txt["descr2", lang]))),
-        #tags$h3(HTML(txt['h3', lang])),
-        div(class = "graphic", hw_grid(plots, ncol = 3, rowheight = chart.height)),
-        div(id = "cite", HTML(source)),
-        HTML(iframeresizer)  
-      ),
-      file =  paste0("departureOverTime_", lang, ".html"), libdir = "js")  
-    
-#}
+for(lang in colnames(txt)) {
+  
+  p1 <- code_sub.sante %>% map(~ plot_code(data, .x))
+  p2 <- code_sub.edu %>% map(~ plot_code(data, .x))
+  p3 <- code_sub.sci %>% map(~ plot_code(data, .x))
+  p4 <- code_sub.art %>% map(~ plot_code(data, .x))
+  p5 <- code_sub.mgmt %>% map(~ plot_code(data, .x))
+  #plots <- lapply(code_sub.sante), function(iso) plotArea(dd, iso))
+  
+  source <- paste0(
+    txt['source', lang], ": ",
+    htmlLink( "https://www.bfs.admin.ch/bfs/fr/home/statistiques/travail-remuneration/activite-professionnelle-temps-travail/actifs-occupes/profession-situation-profession.assetdetail.4362786.html", txt['source.name', lang] ), " | ",
+    txt['code', lang], ": ", htmlLink("https://github.com/jbkunst/highcharter", txt['code.name', lang]),
+    " | swissinfo.ch"
+  )
+  
+  save_html(
+    tags$html(
+      tags$head(includeHTML(style_swi_highcharter())),
+      tags$h2(HTML(txt["main.title1", lang])),
+      div(class = "descr", HTML(paste0('<img src="https://interactive.swissinfo.ch/assets/Interactive_icon.svg.png" width="12" align="top">&nbsp; '))),
+      tags$h3(HTML(txt['h3.1', lang])),
+      div(class = "graphic", hw_grid(p1, ncol = 3, rowheight = chart.height)),
+      tags$h3(HTML(txt['h3.2', lang])),
+      div(class = "graphic", hw_grid(p2, ncol = 3, rowheight = chart.height)),
+      tags$h3(HTML(txt['h3.3', lang])),
+      div(class = "graphic", hw_grid(p3, ncol = 3, rowheight = chart.height)),
+      tags$h3(HTML(txt['h3.4', lang])),
+      div(class = "graphic", hw_grid(p4, ncol = 3, rowheight = chart.height)),
+      tags$h3(HTML(txt['h3.5', lang])),
+      div(class = "graphic", hw_grid(p5, ncol = 3, rowheight = chart.height)),
+      div(id = "cite", HTML(source)),
+      HTML(iframeresizer)  
+    ),
+    file =  paste0("jobGender_flip_", lang, ".html"), libdir = "js")  
+  
+}
 
 ```
 
