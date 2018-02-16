@@ -16,7 +16,13 @@ output:
 ## Notes
 
 
-[Les 30 emplois les plus répandus en Suisse en 2016 et leurs proportions de femmes et d'hommes](https://www.datawrapper.de/_/6CPSs/)
+
+
+
+
+
+
+
 * Level 1: augmentation des femmes dans 3 (technique et informatique),  8 (santé, enseignement, culture et scientifique)
 * Level 2: 
 
@@ -29,38 +35,56 @@ output:
  
 ### Intro 
 
-Moins 5% des hommes en couple avec enfant n'exercaient aucune activité professionelle en 2016. Chez les femmes, plus de 20%. [stats OFS](https://www.bfs.admin.ch/bfs/fr/home/statistiques/situation-economique-sociale-population/egalite-femmes-hommes/conciliation-emploi-famille/participation-meres-peres-marche-emploi.assetdetail.2920121.html)
-
-Le modèle familial bourgeois traditionnel, où monsieur travaille et madame garde les enfants, a longtemps persisté en Suisse. 
-
-Depuis les années 90, le modèle s’est modernisé. Les femmes gardent majoritairement leur emploi une fois mères, mais le plus souvent à temps partiel.  
-
-[En 45 ans, la part des femmes dans la population active a augmenté de 12 points de pourcentage](https://datawrapper.dwcdn.net/hoiPR/1/)
+Homme sage-femme, femme électricienne, ... Masculins ou féminins, les stéréotypes professionnels restent tenaces en Suisse. La Suisse demeure à la traîne en ce qui concerne le travail des femmes. Le marché du travail helvétique est même le plus discriminatoire d’Europe concernant l’égalité homme-femme, selon une étude du journal britannique The Economist. Le point en graphiques sur l'évolution, ou la stagnation, de la ségrégration de genre professionnelle en Suisse en un demi-siècle.
 
 
+** [Les 30 emplois les plus répandus en Suisse en 2016 et leurs proportions de femmes et d'hommes](https://www.datawrapper.de/_/6CPSs/) ** 
 
 
-Dans le choix d'une carrière, les Suisses optent toujours pour des métiers associés à leur genre, selon une étude. Une homme sage-femme ou une femme maçon: seul 1% des jeunes se dirigent vers un emploi atypique.
-https://www.rts.ch/info/suisse/5145613-masculins-ou-feminins-les-stereotypes-professionnels-restent-tenaces.html
+#### 1 Une lente évolution du modèle familial traditionnel  
+
+Moins 5% des hommes en couple avec enfant n'exercaient aucune activité professionelle en 2016. Chez les femmes dans une situation similaire, plus de 20% ne travaillent pas. [stats OFS](https://www.bfs.admin.ch/bfs/fr/home/statistiques/situation-economique-sociale-population/egalite-femmes-hommes/conciliation-emploi-famille/participation-meres-peres-marche-emploi.assetdetail.2920121.html)
+
+la Suisse n'ayant pas connu les conflits mondiaux du XXème siècle, le travail féminin n'a pas été poussé pour combler le manque de population active. Le modèle familial bourgeois traditionnel, où monsieur travaille et madame garde les enfants, a ainsi longtemps persisté en Suisse.
+
+Depuis les années 90, ce modèle s’est modernisé. Les femmes gardent majoritairement leur emploi une fois mères, mais le plus souvent à temps partiel.  
+
+** [Moins de 50 ans encore, les femmes ne représentaitent qu'un tiers de la population active](https://datawrapper.dwcdn.net/hoiPR/1/) **
+ 
+#### 2 Les femmes, loins des fourneaux?
+Si la part des femmes dans la population active a augmenté de manière constante en l'espace de 45 ans. C'est principalement dans les professions les plus qualifiées.
+
+** [Evolution en 50 ans de l'emploi des femmes par catégorie](https://www.datawrapper.de/_/0r5i5/) **
+
+
+#### 3 Autrefois masculins, désormais majoritairement féminins. 
+Des professions qui étaient majoritairement masculines 
+
+
+#### 5 Ceci dit, la ségrégration demeure tenace
 
 
 
+Mais la ségrégration de genre professionnelle persiste
 
-[](http://www.le-ser.ch/sites/default/files/2016.07.coulisses.pdf)
 
 
+Aussi une question de rémunération
+
+Cette situation est problématique, notamment parce que les métiers typiquement féminins comme les tâches de soins ou l'éducation des enfants jouissent d'un statut social inférieur, offrent peu de chances de carrière et sont faiblement rémunérés.
+
+En outre, des secteurs d'activité fortement sexués souffrant d'une pénurie de main-d'oeuvre qualifiée profiteraient d'une ségrégation moins marquée.
 
 
 https://www.rts.ch/info/suisse/7790263-ecole-primaire-cherche-hommes-desesperement.html
 
 
-
 Le système suisse décourage le travail féminin
 http://www.bilan.ch/economie-plus-de-redaction/systeme-suisse-decourage-travail-feminin
 
-
-
 [Histoires d’égalité](http://www.le-ser.ch/sites/default/files/2016.07.coulisses.pdf)
+
+https://www.rts.ch/info/suisse/5145613-masculins-ou-feminins-les-stereotypes-professionnels-restent-tenaces.html
 
 #### Snippets
 
@@ -84,6 +108,7 @@ http://www.bilan.ch/economie-plus-de-redaction/systeme-suisse-decourage-travail-
 * [Most Female and Male Occupations Since 1950](https://flowingdata.com/2017/09/11/most-female-and-male-occupations-since-1950/)
 
 * [Le système suisse décourage le travail féminin](http://www.bilan.ch/economie-plus-de-redaction/systeme-suisse-decourage-travail-feminin)
+* [Le travail des mères en Suisse : évolution et déterminants individuels](http://www.socialchangeswitzerland.ch/?p=1266)
 * [Les femmes médecins toujours plus nombreuses](https://www.24heures.ch/savoirs/sante/femmes-medecins-toujours-nombreuses/story/30895318)
 
 ## Video
@@ -231,10 +256,65 @@ d_all %>%
   mutate(share_hommes = 1 - share_femmes) %>%
   write_csv("input/dw_share_sex_popActiveOccupée.csv")
 
+data %>% filter(niveau == 1) %>%
+  select(year, femmes, description) %>%
+  mutate(femmes = round(femmes * 1000)) %>%
+  spread(description, femmes)  %>%
+  write_csv("input/dw_womenBy_jobLevel1.csv")
+
+# Same but keep only the 3 
+tot <- data %>% filter(niveau == 1) %>%
+    select(year, femmes, description) %>%
+    group_by(description) %>%
+    summarise(tot = sum(femmes)) %>%
+  ungroup() %>%
+  arrange(desc(tot))
+top_4_descr <- head(tot$description, 4) %>% as.character()
+
+d_women_level1_agg <- data %>% filter(niveau == 1) %>%
+  select(year, femmes, description) %>%
+  mutate(description = ifelse(description %in% top_4_descr, as.character(description), "autres")) %>%
+  group_by(description, year) %>%
+  summarise(femmes = sum(femmes)) %>%
+  ungroup()
+
+d_women_level1_agg %>%
+   mutate(femmes = round(femmes * 1000)) %>%
+   spread(description, femmes)  %>%
+   write_csv("input/dw_womenBy_jobLevel1_agg.csv")
 ```
 
-```{r exploratory job gender evolution, eval = F}
+```{r explore evolution for general job levels}
+data %>% filter(niveau == 1) %>%
+  ggplot(aes(x = year, y = hommes, group = description, fill = description)) +
+  geom_area() +
+  theme(legend.position = "top")
+
+data %>% filter(niveau == 1) %>%
+  ggplot(aes(x = year, y = femmes, group = description, fill = description)) +
+  geom_area()+
+  theme(legend.position = "top")
+
+```
+
+```{r helpers multi page}
 library(ggforce) # for multi page facet charts
+
+plot_multip2 <- function(ddd) {
+  # Calculate the number of pages with 9 panels per page
+  n_pages<- ceiling(length(unique(ddd$description)) / 12)
+  
+ for(i in seq_len(n_pages)) {
+  p <- ddd %>%
+    ggplot(aes(x = year, y = share_femmes, size = total, colour = share_femmes)) +
+    geom_line() + ylim(c(0,1)) +
+    geom_hline(yintercept = 0.5, colour = "darkgrey") + 
+    facet_wrap_paginate(~ wdescr, nrow = 4, ncol = 3, page = i) +
+    swi_theme() +
+    scale_color_viridis(option="C", direction = -1)
+  print(p)
+ }
+}
 
 plot_multip <- function(data, nn) {
   ddd <- data %>% filter(niveau == nn) %>%
@@ -257,8 +337,69 @@ plot_multip <- function(data, nn) {
     labs(title = str_c("isco level ", nn))
   print(p)
  }
-
 }
+```
+
+```{r explore flip majority}
+d_flip <- data %>%
+  arrange(year) %>%
+  group_by(code) %>%
+  mutate(
+    majority_women_first = first(share_femmes) >= 0.5,
+    majority_women_last  = last(share_femmes)  >= 0.5,
+    delta_share = last(share_femmes) - first(share_femmes),
+    flip = ifelse(majority_women_first == majority_women_last, F, T)
+  ) %>%
+  ungroup() %>%
+  arrange(desc(abs(delta_share)))
+
+
+d_flip %>% filter(flip, niveau == 4, year == 2016)# %>% View()
+
+d_flip %>% filter(flip, niveau == 4, year == 2016, total >= 1) %>%
+  select(code, niveau, description, total, share_femmes, delta_share, year) %>%
+  knitr::kable(caption = "Professions (of at least 1k job) flip from men to predominently women")
+
+d_flip_l4 <- d_flip %>% filter(flip, niveau == 4, year == 2016, total >= 1) %>%
+  select(code, niveau, description, total, share_femmes, delta_share) %>%
+  mutate(
+    total_r = rank(-total),
+    share_femmes_r = rank(-share_femmes), 
+    delta_share_r  = rank(-delta_share)
+  )
+d_flip_l4$mean_r <- (d_flip_l4$total_r + d_flip_l4$share_femmes_r + d_flip_l4$delta_share_r) / 3
+d_flip_l4 %<>% arrange(mean_r) 
+code_sub <- d_flip_l4 %>% .$code
+data %>% 
+  filter(code %in% code_sub) %>%
+  mutate(group = str_sub(code, 1, 2 )) %>% 
+  .$group %>% table()
+
+d_flip %>% filter(flip, niveau == 4, year == 2016, majority_women_first == T) %>%
+  select(code, niveau, description, total, share_femmes, delta_share) %>%
+  knitr::kable(caption = "Professions flip from women to predominently men")
+
+
+```
+
+```{r exploratory job gender evolution, eval = F}
+
+d_gf <- data %>% 
+  filter(code %in% code_sub) %>%
+  mutate(
+    group = str_sub(code, 1, 2 ) %>% as.factor(),
+    wdescr = as.factor(str_wrap(str_c(description, code, sep =" - "), width = 25)) %>% 
+        fct_reorder(as.numeric(group))
+  )
+
+
+
+
+png("output/explore_flip_%02d.png", width = 700, height = 1000)
+plot_multip2(d_gf %>%
+  arrange(desc(share_femmes)))
+dev.off()  
+
 
 if(print_all_jobLevels) {
   png("output/explore_shareWomen_%02d.png", width = 700, height = 1000)
