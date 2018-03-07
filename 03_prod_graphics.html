@@ -141,21 +141,43 @@ $(document).ready(function () {
 </div>
 
 
-<pre class="r"><code>code.sub &lt;- &quot;751.02&quot;
+<p><span style="border-bottom:3px solid red;">masculin</span> <span class="underl dblue">safasd</span></p>
+<pre class="r"><code>if(export_iscoCodeAndName) {
+  data %&gt;% filter(
+    code %in% c(code_sub.sante, code_sub.edu, code_sub.sci, code_sub.art, code_sub.mgmt, code_sub.nf, code_ste.man, code.ste.wom)) %&gt;%
+    select(code, description) %&gt;% 
+    unique() %&gt;%
+  write_csv(path = &quot;iscoCode2Job_tmp.csv&quot;)
+}</code></pre>
+<pre class="r"><code>code.sub &lt;- &quot;861.01&quot;
 #code.sub &lt;- &quot;253.02&quot;
 lang &lt;- 'FR'
 chart.height &lt;- 200
+bg.colour &lt;-  &quot;#f2f2f2&quot;
+title &lt;- T
 
-plot_code &lt;- function(data, code.sub) {
+plot_code &lt;- function(data, code.sub, titled = T) {
   dd &lt;- data %&gt;% filter(code == code.sub) 
-  jobLabel &lt;- unique(dd$description)
+  
+  jobLabel &lt;- txt[code.sub, lang]
+  stopifnot(length(jobLabel) &gt; 0, !is.null(jobLabel))
+  
   dd %&lt;&gt;% select(-code, -niveau, -total, -hommes, -femmes, -description) %&gt;%
     rename(femmes = share_femmes, hommes = share_hommes) %&gt;%
     gather(sex, value, -year) %&gt;%
     mutate(sex = as.factor(sex)) %&gt;%
-    arrange(year) %&gt;%
+    arrange(year, sex) %&gt;%
     mutate(
       value = value * 100
+    )
+  # absolute values for tooltip
+  dd2 &lt;-  data %&gt;% filter(code == code.sub) %&gt;% 
+    select(-code, -niveau, -total, -share_hommes, -share_femmes, -description) %&gt;%
+    gather(sex, abs, -year) %&gt;%
+    mutate(sex = as.factor(sex)) %&gt;%
+    arrange(year, sex) %&gt;%
+    mutate(
+      abs = round(abs * 1000)
     )
   
   dd.f &lt;- dd %&gt;% filter(sex == &quot;femmes&quot;)
@@ -164,16 +186,7 @@ plot_code &lt;- function(data, code.sub) {
   
   ### Find intersect ###
   # 1 find intersect https://stackoverflow.com/questions/31404679/can-ggplot2-find-the-intersections-or-is-there-any-other-neat-way
-  # f1 &lt;- approxfun(
-  #   dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year, dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$value)
-  # #approx(dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year, dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$value)
-  # f2 &lt;- approxfun(
-  #   dd %&gt;% filter(sex == &quot;hommes&quot;) %&gt;% .$year, dd %&gt;% filter(sex == &quot;hommes&quot;) %&gt;% .$value)
-  # minV &lt;- optimise(function(t0) abs(f1(t0) - f2(t0)),
-  #                  lower = min(dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year), 
-  #                  upper = max(dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year), 
-  #                  tol = 1e-100)$minimum
-  
+
   # 2 using sp rgeos
   #https://stackoverflow.com/questions/21647982/how-to-get-the-intersection-point-of-two-vector
   f1 &lt;-  SpatialLines(list(Lines(Line(
@@ -182,8 +195,10 @@ plot_code &lt;- function(data, code.sub) {
   f2 &lt;-  SpatialLines(list(Lines(Line(
     dd %&gt;% filter(sex == &quot;hommes&quot;, !is.na(value)) %&gt;% select(-sex) %&gt;% as.matrix()
     ), &quot;A&quot;)))
-  minV &lt;- coordinates(gIntersection(f1, f2))[1,'x']
-  
+  gIts &lt;- gIntersection(f1, f2)
+  if(!is.null(gIts)) {
+      minV &lt;- coordinates(gIts)[1,'x']    
+  }
   # if flip occurred
   flip &lt;- F
 
@@ -205,53 +220,72 @@ plot_code &lt;- function(data, code.sub) {
     col1 &lt;- ifelse(all(dd.range$hommes &gt;= dd.range$femmes), &quot;#4c6570&quot;, &quot;#b15953&quot;)
   }
   
+  #tooltip
+  dd &lt;- left_join(dd, dd2)
+
+  dd %&lt;&gt;% mutate(
+    tp = str_c(
+    '&lt;table class=&quot;table&quot;&gt;',
+    '&lt;tr&gt;&lt;td&gt;&lt;em&gt;', dd$year,'&lt;/b&gt;&lt;/td&gt;&lt;td&gt;', txt[as.character(dd$sex), lang], '&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;',
+    '&lt;tr&gt;&lt;td&gt;', round(dd$value, 1), '%&lt;/td&gt;&lt;td&gt;',  dd$abs, ' ', txt['emplois', lang], '&lt;/td&gt;&lt;/tr&gt;',
+    '&lt;/table&gt;')
+  )
+
   if(flip) {
     hc &lt;- highchart(height = chart.height) %&gt;%  
       hc_add_series(dd.range1, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5)) %&gt;%
       hc_add_series(dd.range2, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col2, 0.5)) %&gt;%
-      hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex),
+      hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex, tp = tp),
                     marker = list(enabled = F, 
-                                  states = list(hover = list(enabled = F))), lineWidth = 1, 
+                                  states = list(hover = list(enabled = F))), lineWidth = 2, 
                     color = c( &quot;#b15953&quot;, &quot;#4c6570&quot;))
       
   } else {
     hc &lt;- highchart(height = chart.height) %&gt;%  
       hc_add_series(dd.range, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5)) %&gt;%
-      hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex),
+      hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex, tp = tp),
                     marker = list(enabled = F, 
-                                  states = list(hover = list(enabled = F))), lineWidth = 1, 
+                                  states = list(hover = list(enabled = F))), lineWidth = 2, 
                     color = c( &quot;#b15953&quot;, &quot;#4c6570&quot;))
   }
-  hc %&gt;%
+  hc2 &lt;- hc %&gt;%
     hc_add_theme(hc_theme_swi) %&gt;%
     hc_legend(enabled = F) %&gt;%
-    hc_tooltip(enabled = F) %&gt;%
+    hc_tooltip(
+      formatter = JS(&quot;function() { return this.point.tp; }&quot;),
+      useHTML = T,
+      hideDelay = 0,
+      style = list(padding = 3, fontSize = &quot;0.7em&quot;)
+    ) %&gt;%
     hc_yAxis(
       min = 0, max = 100, tickAmount = 3, opposite = ifelse(lang == &quot;AR&quot;, T, F),
-      useHTML = T, labels = list(format = '{value} %', style = list(fontSize = &quot;0.8em&quot;))
+      useHTML = T, labels = list(format = '{value} %', style = list(fontSize = ifelse(titled, &quot;0.8em&quot;, 0)))
     ) %&gt;%
     hc_xAxis(
       gridLineWidth = 0.7, lineColor = &quot;#CEC6B9&quot;, gridZIndex = -1, tickLength = 0, 
-      labels = list(y = 13), reversed = ifelse(lang == &quot;AR&quot;, T, F)) %&gt;%
-    hc_title(
-         text = as.character(jobLabel), style = list(&quot;fontSize&quot; = &quot;1em&quot;, &quot;color&quot; = '#193442', fontWeight = &quot;normal&quot;),
-          floating = T, align = ifelse(lang == &quot;AR&quot;, &quot;left&quot;, &quot;right&quot;), 
-          useHTML = T, y = 7, x = ifelse(lang == &quot;AR&quot;, 5, -5)
+      labels = list(y = 13, enabled =  ifelse(titled, T, F)), reversed = ifelse(lang == &quot;AR&quot;, T, F)
     )
+  
+  if(titled) {
+    hc2 %&lt;&gt;% hc_title(
+      text = as.character(jobLabel), 
+      style = list(&quot;fontSize&quot; = &quot;1em&quot;, &quot;color&quot; = '#193442', fontWeight = &quot;normal&quot;),
+      floating = T, align = ifelse(lang == &quot;AR&quot;, &quot;right&quot;, &quot;left&quot;), 
+      useHTML = T, x = ifelse(lang == &quot;AR&quot;, 0, 27), y = -32
+    ) %&gt;%
+      hc_chart(
+        #backgroundColor = bg.colour,
+        spacing = list(45, 2, 17, 4)
+        # , borderRadius = 4,
+        # borderColor = &quot;white&quot;, borderWidth = 1
+      )    
+  }    
+  
+  hc2
 }</code></pre>
-<pre class="r"><code>code_sub.sante</code></pre>
-<pre><code>## [1] &quot;864.01&quot; &quot;861.03&quot; &quot;862.04&quot; &quot;865.03&quot; &quot;862.03&quot; &quot;862.07&quot;</code></pre>
-<pre class="r"><code>code_sub.edu </code></pre>
-<pre><code>## [1] &quot;846.04&quot; &quot;843.01&quot; &quot;846.05&quot;</code></pre>
-<pre class="r"><code>code_sub.sci </code></pre>
-<pre><code>## [1] &quot;851.03&quot; &quot;851.01&quot; &quot;853.01&quot;</code></pre>
-<pre class="r"><code>code_sub.art </code></pre>
-<pre><code>## [1] &quot;822.01&quot; &quot;824.09&quot; &quot;824.07&quot;</code></pre>
-<pre class="r"><code>code_sub.mgmt </code></pre>
-<pre><code>## [1] &quot;711.04&quot; &quot;721.03&quot; &quot;721.02&quot; &quot;751.04&quot; &quot;751.02&quot;</code></pre>
 <pre class="r"><code>for(lang in colnames(txt)) {
   
   p1 &lt;- code_sub.sante %&gt;% map(~ plot_code(data, .x))
@@ -259,38 +293,309 @@ plot_code &lt;- function(data, code.sub) {
   p3 &lt;- code_sub.sci %&gt;% map(~ plot_code(data, .x))
   p4 &lt;- code_sub.art %&gt;% map(~ plot_code(data, .x))
   p5 &lt;- code_sub.mgmt %&gt;% map(~ plot_code(data, .x))
+  
+  p6 &lt;- code_sub.nf %&gt;% map(~ plot_code(data, .x))
+  p7 &lt;- code_ste.man %&gt;% map(~ plot_code(data, .x))
+  p8 &lt;- code.ste.wom  %&gt;% map(~ plot_code(data, .x))
+  
   #plots &lt;- lapply(code_sub.sante), function(iso) plotArea(dd, iso))
   
   source &lt;- paste0(
     txt['source', lang], &quot;: &quot;,
     htmlLink( &quot;https://www.bfs.admin.ch/bfs/fr/home/statistiques/travail-remuneration/activite-professionnelle-temps-travail/actifs-occupes/profession-situation-profession.assetdetail.4362786.html&quot;, txt['source.name', lang] ), &quot; | &quot;,
     txt['code', lang], &quot;: &quot;, htmlLink(&quot;https://github.com/jbkunst/highcharter&quot;, txt['code.name', lang]),
-    &quot; | swissinfo.ch&quot;
+    &quot; | swissinfo.ch | &quot;,
+    htmlLink(&quot;https://twitter.com/duc_qn&quot;, &quot;@duc_qn&quot;), &quot; &quot;, txt['inspiredBy', lang], &quot; &quot;,
+    htmlLink(&quot;http://flowingdata.com/2017/09/11/most-female-and-male-occupations-since-1950/&quot;, &quot;Flowing Data&quot;)
   )
   
   save_html(
     tags$html(
-      tags$head(includeHTML(style_swi_highcharter())),
-      tags$h2(HTML(txt[&quot;main.title1&quot;, lang])),
-      div(class = &quot;descr&quot;, HTML(paste0('&lt;img src=&quot;https://interactive.swissinfo.ch/assets/Interactive_icon.svg.png&quot; width=&quot;12&quot; align=&quot;top&quot;&gt;&amp;nbsp; '))),
-      tags$h3(HTML(txt['h3.1', lang])),
+      dir = ifelse(lang == &quot;AR&quot;, &quot;rtl&quot;, &quot;ltr&quot;),
+      tags$head(includeHTML(style_swi_highcharter_centered()), includeCSS(swi_highlight_css())),
+      h2(HTML(txt[&quot;main.title1&quot;, lang])),
+      div(class = &quot;descr&quot;, HTML(
+        paste0(txt['descr1', lang], &quot; &quot;, txt['descr2', lang]))),
+      br(),
+      h3(HTML(txt['h3.1', lang])),
+      br(),
       div(class = &quot;graphic&quot;, hw_grid(p1, ncol = 3, rowheight = chart.height)),
-      tags$h3(HTML(txt['h3.2', lang])),
+      br(),
+      h3(HTML(txt['h3.2', lang])),
+      br(),
       div(class = &quot;graphic&quot;, hw_grid(p2, ncol = 3, rowheight = chart.height)),
-      tags$h3(HTML(txt['h3.3', lang])),
+      br(),
+      h3(HTML(txt['h3.3', lang])),
+      br(),
       div(class = &quot;graphic&quot;, hw_grid(p3, ncol = 3, rowheight = chart.height)),
-      tags$h3(HTML(txt['h3.4', lang])),
+      br(),
+      h3(HTML(txt['h3.4', lang])),
+      br(),
       div(class = &quot;graphic&quot;, hw_grid(p4, ncol = 3, rowheight = chart.height)),
-      tags$h3(HTML(txt['h3.5', lang])),
+      br(),
+      h3(HTML(txt['h3.5', lang])),
+      br(),
       div(class = &quot;graphic&quot;, hw_grid(p5, ncol = 3, rowheight = chart.height)),
+      
+      br(),br(),
+      h2(HTML(txt[&quot;main.title2&quot;, lang])),
+      br(),
+      div(class = &quot;descr&quot;, HTML(txt['descr2', lang])),
+      div(class = &quot;graphic&quot;, hw_grid(p6, ncol = 4, rowheight = chart.height)),
+      
       div(id = &quot;cite&quot;, HTML(source)),
-      HTML(iframeresizer)  
+      HTML(iframeresizer)
     ),
     file =  paste0(&quot;jobGender_flip_&quot;, lang, &quot;.html&quot;), libdir = &quot;js&quot;)  
   
+    save_html(
+    tags$html(
+      dir = ifelse(lang == &quot;AR&quot;, &quot;rtl&quot;, &quot;ltr&quot;),
+      tags$head(includeHTML(style_swi_highcharter_centered()), includeCSS(swi_highlight_css())),
+      h2(HTML(txt[&quot;main.title3&quot;, lang])),
+      div(class = &quot;descr&quot;, HTML(
+        paste0(txt['descr2', lang]))),
+      br(),
+      h3(HTML(txt['h3.1b', lang])),
+      br(),
+      div(class = &quot;graphic&quot;, hw_grid(p7, ncol = 4, rowheight = chart.height)),
+      br(),
+      h3(HTML(txt['h3.2b', lang])),
+      br(),
+      div(class = &quot;graphic&quot;, hw_grid(p8, ncol = 4, rowheight = chart.height)),
+      div(id = &quot;cite&quot;, HTML(source)),
+      HTML(iframeresizer)
+    ),
+    file =  paste0(&quot;jobGender_steady_&quot;, lang, &quot;.html&quot;), libdir = &quot;js&quot;)  
+  
 }</code></pre>
+<pre><code>## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)
+## Joining, by = c(&quot;year&quot;, &quot;sex&quot;)</code></pre>
 <pre class="r"><code>if (cleanOutput) {
-  files &lt;- c(&quot;basename_.*html&quot;, &quot;js&quot;)
+  files &lt;- c(&quot;jobGender_.*html&quot;, &quot;js&quot;)
 
   if (!dir.exists(&quot;output/bak&quot;)) {
     dir.create(&quot;output/bak&quot;)
@@ -305,406 +610,540 @@ plot_code &lt;- function(data, code.sub) {
   file.copy(files_tomove, &quot;output&quot;, recursive = T)
   unlink(files_tomove, recursive = T)
 }</code></pre>
+<pre class="r"><code>if(teaserify) {
+  teaser &lt;- c(code_sub.sante, code_sub.edu, code_sub.sci, code_sub.art, code_sub.mgmt, code_sub.sante) %&gt;% map(~ plot_code(data, .x, titled = F))
+
+  save_html(
+    tags$html(
+      tags$head(includeHTML(style_swi_highcharter_centered() )),
+    div(class = &quot;graphic&quot;, hw_grid(teaser, ncol = 6, rowheight = chart.height))
+  ),
+  file = &quot;teaser.html&quot;, libdir = &quot;js&quot;)  
+    
+}</code></pre>
 <pre class="r"><code>lintr::lint(knitr::current_input())</code></pre>
 <pre><code>## 03_prod_graphics.Rmd:1:30: style: Use two spaces to indent, never tabs.
 ## column_names &lt;- c('division',    'classe', 'groupe', 'genre', 'description', 
 ##                              ^
-## 03_prod_graphics.Rmd:25:9: style: Variable and function names should be all lowercase.
+## 03_prod_graphics.Rmd:30:9: style: Variable and function names should be all lowercase.
 ## library(swiMap)
 ##         ^~~~~~
-## 03_prod_graphics.Rmd:26:9: style: Variable and function names should be all lowercase.
+## 03_prod_graphics.Rmd:31:9: style: Variable and function names should be all lowercase.
 ## library(swiTheme)
 ##         ^~~~~~~~
-## 03_prod_graphics.Rmd:31:9: style: Variable and function names should be all lowercase.
+## 03_prod_graphics.Rmd:36:9: style: Variable and function names should be all lowercase.
 ## library(swiRcharts)
 ##         ^~~~~~~~~~
-## 03_prod_graphics.Rmd:34:18: style: Commented code should be removed.
+## 03_prod_graphics.Rmd:39:18: style: Commented code should be removed.
 ## library(sp)     ## Provides basic spatial classes/methods, incl. SpatialLines
 ##                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:35:15: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:40:15: style: Trailing whitespace is superfluous.
 ## library(rgeos)  
 ##               ^~
-## 03_prod_graphics.Rmd:39:19: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:44:19: style: Only use double-quotes.
 ## column_names &lt;- c('division',    'classe', 'groupe', 'genre', 'description', 
 ##                   ^~~~~~~~~~
-## 03_prod_graphics.Rmd:39:33: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:44:33: style: Only use double-quotes.
 ## column_names &lt;- c('division',    'classe', 'groupe', 'genre', 'description', 
 ##                                 ^~~~~~~~
-## 03_prod_graphics.Rmd:39:43: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:44:43: style: Only use double-quotes.
 ## column_names &lt;- c('division',    'classe', 'groupe', 'genre', 'description', 
 ##                                           ^~~~~~~~
-## 03_prod_graphics.Rmd:39:53: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:44:53: style: Only use double-quotes.
 ## column_names &lt;- c('division',    'classe', 'groupe', 'genre', 'description', 
 ##                                                     ^~~~~~~
-## 03_prod_graphics.Rmd:39:62: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:44:62: style: Only use double-quotes.
 ## column_names &lt;- c('division',    'classe', 'groupe', 'genre', 'description', 
 ##                                                              ^~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:39:74: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:44:74: style: Trailing whitespace is superfluous.
 ## column_names &lt;- c('division',    'classe', 'groupe', 'genre', 'description', 
 ##                                                                          ^
-## 03_prod_graphics.Rmd:40:19: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:45:19: style: Only use double-quotes.
 ##                   'total', 'hommes', 'femmes', 'suisses', 'étrangers')
 ##                   ^~~~~~~
-## 03_prod_graphics.Rmd:40:28: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:45:28: style: Only use double-quotes.
 ##                   'total', 'hommes', 'femmes', 'suisses', 'étrangers')
 ##                            ^~~~~~~~
-## 03_prod_graphics.Rmd:40:38: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:45:38: style: Only use double-quotes.
 ##                   'total', 'hommes', 'femmes', 'suisses', 'étrangers')
 ##                                      ^~~~~~~~
-## 03_prod_graphics.Rmd:40:48: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:45:48: style: Only use double-quotes.
 ##                   'total', 'hommes', 'femmes', 'suisses', 'étrangers')
 ##                                                ^~~~~~~~~
-## 03_prod_graphics.Rmd:40:59: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:45:59: style: Only use double-quotes.
 ##                   'total', 'hommes', 'femmes', 'suisses', 'étrangers')
 ##                                                           ^~~~~~~~~~~~
-## 03_prod_graphics.Rmd:41:19: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:46:19: style: Only use double-quotes.
 ## column_types &lt;- c('text', 'text', 'text', 'numeric', 'text', 
 ##                   ^~~~~~
-## 03_prod_graphics.Rmd:41:27: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:46:27: style: Only use double-quotes.
 ## column_types &lt;- c('text', 'text', 'text', 'numeric', 'text', 
 ##                           ^~~~~~
-## 03_prod_graphics.Rmd:41:35: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:46:35: style: Only use double-quotes.
 ## column_types &lt;- c('text', 'text', 'text', 'numeric', 'text', 
 ##                                   ^~~~~~
-## 03_prod_graphics.Rmd:41:43: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:46:43: style: Only use double-quotes.
 ## column_types &lt;- c('text', 'text', 'text', 'numeric', 'text', 
 ##                                           ^~~~~~~~~
-## 03_prod_graphics.Rmd:41:54: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:46:54: style: Only use double-quotes.
 ## column_types &lt;- c('text', 'text', 'text', 'numeric', 'text', 
 ##                                                      ^~~~~~
-## 03_prod_graphics.Rmd:41:61: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:46:61: style: Trailing whitespace is superfluous.
 ## column_types &lt;- c('text', 'text', 'text', 'numeric', 'text', 
 ##                                                             ^
-## 03_prod_graphics.Rmd:42:19: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:47:19: style: Only use double-quotes.
 ##                   'numeric', 'numeric', 'numeric', 'numeric', 'numeric')
 ##                   ^~~~~~~~~
-## 03_prod_graphics.Rmd:42:30: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:47:30: style: Only use double-quotes.
 ##                   'numeric', 'numeric', 'numeric', 'numeric', 'numeric')
 ##                              ^~~~~~~~~
-## 03_prod_graphics.Rmd:42:41: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:47:41: style: Only use double-quotes.
 ##                   'numeric', 'numeric', 'numeric', 'numeric', 'numeric')
 ##                                         ^~~~~~~~~
-## 03_prod_graphics.Rmd:42:52: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:47:52: style: Only use double-quotes.
 ##                   'numeric', 'numeric', 'numeric', 'numeric', 'numeric')
 ##                                                    ^~~~~~~~~
-## 03_prod_graphics.Rmd:42:63: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:47:63: style: Only use double-quotes.
 ##                   'numeric', 'numeric', 'numeric', 'numeric', 'numeric')
 ##                                                               ^~~~~~~~~
-## 03_prod_graphics.Rmd:47:2: style: Commented code should be removed.
+## 03_prod_graphics.Rmd:52:2: style: Commented code should be removed.
 ## ## flip codes: men -&gt; women
 ##  ^~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:48:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:53:1: style: lines should not be more than 80 characters.
 ## code_sub.sante &lt;- c(&quot;864.01&quot;, &quot;861.03&quot;, &quot;862.04&quot;, &quot;865.03&quot;, &quot;862.03&quot;, &quot;862.07&quot;) # sante
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:49:77: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:54:77: style: Trailing whitespace is superfluous.
 ## code_sub.edu  &lt;- c(&quot;846.04&quot;, &quot;843.01&quot;, &quot;846.05&quot;) # education et enseignement 
 ##                                                                             ^
-## 03_prod_graphics.Rmd:50:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:55:1: style: lines should not be more than 80 characters.
 ## code_sub.sci  &lt;- c(&quot;851.03&quot;, &quot;851.01&quot;, &quot;853.01&quot;) #sciences sociales, humaines, naturelles, physiques et exactes
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:52:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:57:1: style: lines should not be more than 80 characters.
 ## code_sub.mgmt &lt;- c( &quot;711.04&quot;, &quot;721.03&quot;, &quot;721.02&quot;, &quot;751.04&quot;, &quot;751.02&quot;) #management, de l'administration, de la banque et des assurances et professions judiciaires
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:60:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:65:1: style: lines should not be more than 80 characters.
 ## code_ste.man &lt;- c(&quot;253.02&quot;, &quot;311.04&quot;, &quot;412.04&quot;, &quot;211.02&quot;, &quot;111.01&quot;, &quot;291.03&quot;, &quot;211.01&quot;, &quot;532.04&quot;)  
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:60:98: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:65:98: style: Trailing whitespace is superfluous.
 ## code_ste.man &lt;- c(&quot;253.02&quot;, &quot;311.04&quot;, &quot;412.04&quot;, &quot;211.02&quot;, &quot;111.01&quot;, &quot;291.03&quot;, &quot;211.01&quot;, &quot;532.04&quot;)  
 ##                                                                                                  ^~
-## 03_prod_graphics.Rmd:61:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:66:1: style: lines should not be more than 80 characters.
 ## code.ste.wom &lt;- c(&quot;844.01&quot;, &quot;831.02&quot;, &quot;862.01&quot;, &quot;865.07&quot;, &quot;812.01&quot;, &quot;865.04&quot;, &quot;862.08&quot;, &quot;114.02&quot;, &quot;845.01&quot;, &quot;861.02&quot;)
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:70:47: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:75:47: style: Trailing whitespace is superfluous.
 ##     raw.xls, sheet = sheet, range = &quot;A5:J525&quot;, 
 ##                                               ^
-## 03_prod_graphics.Rmd:71:60: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:76:60: style: Trailing whitespace is superfluous.
 ##     col_names = column_names, col_types = column_types) %&gt;% 
 ##                                                            ^
-## 03_prod_graphics.Rmd:73:14: style: Commas should always have a space after.
+## 03_prod_graphics.Rmd:78:14: style: Commas should always have a space after.
 ##   xl.read[-1,]
 ##              ^
-## 03_prod_graphics.Rmd:77:22: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:82:22: style: Trailing whitespace is superfluous.
 ## data &lt;- data.read %&gt;% 
 ##                      ^
-## 03_prod_graphics.Rmd:84:60: style: Put spaces around all infix operators.
+## 03_prod_graphics.Rmd:89:60: style: Put spaces around all infix operators.
 ##   unite(division, classe, groupe, genre, col = &quot;code&quot;, sep =&quot;&quot;) %&gt;%
 ##                                                            ^~
-## 03_prod_graphics.Rmd:87:31: style: Put spaces around all infix operators.
+## 03_prod_graphics.Rmd:92:31: style: Put spaces around all infix operators.
 ##   mutate(share_femmes = femmes/total, share_suisses = suisses/total) 
 ##                              ~^~
-## 03_prod_graphics.Rmd:87:62: style: Put spaces around all infix operators.
+## 03_prod_graphics.Rmd:92:62: style: Put spaces around all infix operators.
 ##   mutate(share_femmes = femmes/total, share_suisses = suisses/total) 
 ##                                                             ~^~
-## 03_prod_graphics.Rmd:87:69: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:92:69: style: Trailing whitespace is superfluous.
 ##   mutate(share_femmes = femmes/total, share_suisses = suisses/total) 
 ##                                                                     ^
-## 03_prod_graphics.Rmd:96:41: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:101:41: style: Trailing whitespace is superfluous.
 ## txt &lt;- loadTranslation(translation.file) 
 ##                                         ^
-## 03_prod_graphics.Rmd:101:2: style: Commented code should be removed.
+## 03_prod_graphics.Rmd:105:3: style: Place a space before left parenthesis, except in a function call.
+## if(export_iscoCodeAndName) {
+##   ^
+## 03_prod_graphics.Rmd:107:1: style: lines should not be more than 80 characters.
+##     code %in% c(code_sub.sante, code_sub.edu, code_sub.sci, code_sub.art, code_sub.mgmt, code_sub.nf, code_ste.man, code.ste.wom)) %&gt;%
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:108:34: style: Trailing whitespace is superfluous.
+##     select(code, description) %&gt;% 
+##                                  ^
+## 03_prod_graphics.Rmd:116:2: style: Commented code should be removed.
 ## #code.sub &lt;- &quot;253.02&quot;
 ##  ^~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:102:9: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:117:9: style: Only use double-quotes.
 ## lang &lt;- 'FR'
 ##         ^~~~
-## 03_prod_graphics.Rmd:106:42: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:123:42: style: Trailing whitespace is superfluous.
 ##   dd &lt;- data %&gt;% filter(code == code.sub) 
 ##                                          ^
-## 03_prod_graphics.Rmd:107:3: style: Variable and function names should be all lowercase.
-##   jobLabel &lt;- unique(dd$description)
-##   ^~~~~~~~
-## 03_prod_graphics.Rmd:116:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:124:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:117:25: warning: no visible binding for global variable 'sex', Did you mean 'seq'?
+## 03_prod_graphics.Rmd:125:3: style: Variable and function names should be all lowercase.
+##   jobLabel &lt;- txt[code.sub, lang]
+##   ^~~~~~~~
+## 03_prod_graphics.Rmd:126:20: style: Variable and function names should be all lowercase.
+##   stopifnot(length(jobLabel) &gt; 0, !is.null(jobLabel))
+##                    ^~~~~~~~
+## 03_prod_graphics.Rmd:126:44: style: Variable and function names should be all lowercase.
+##   stopifnot(length(jobLabel) &gt; 0, !is.null(jobLabel))
+##                                            ^~~~~~~~
+## 03_prod_graphics.Rmd:127:1: style: Trailing whitespace is superfluous.
+##   
+## ^~
+## 03_prod_graphics.Rmd:137:48: style: Trailing whitespace is superfluous.
+##   dd2 &lt;-  data %&gt;% filter(code == code.sub) %&gt;% 
+##                                                ^
+## 03_prod_graphics.Rmd:138:1: style: lines should not be more than 80 characters.
+##     select(-code, -niveau, -total, -share_hommes, -share_femmes, -description) %&gt;%
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:145:1: style: Trailing whitespace is superfluous.
+##   
+## ^~
+## 03_prod_graphics.Rmd:146:25: warning: no visible binding for global variable 'sex', Did you mean 'seq'?
 ##   dd.f &lt;- dd %&gt;% filter(sex == &quot;femmes&quot;)
 ##                         ^~~
-## 03_prod_graphics.Rmd:118:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:147:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:119:29: warning: no visible binding for global variable 'sex', Did you mean 'seq'?
+## 03_prod_graphics.Rmd:148:29: warning: no visible binding for global variable 'sex', Did you mean 'seq'?
 ##   dd.range &lt;- dd %&gt;% spread(sex, value)
 ##                             ^~~
-## 03_prod_graphics.Rmd:119:34: warning: no visible binding for global variable 'value'
+## 03_prod_graphics.Rmd:148:34: warning: no visible binding for global variable 'value'
 ##   dd.range &lt;- dd %&gt;% spread(sex, value)
 ##                                  ^~~~~
-## 03_prod_graphics.Rmd:120:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:149:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:122:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:151:1: style: lines should not be more than 80 characters.
 ##   # 1 find intersect https://stackoverflow.com/questions/31404679/can-ggplot2-find-the-intersections-or-is-there-any-other-neat-way
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:124:1: style: lines should not be more than 80 characters.
-##   #   dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year, dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$value)
-## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:125:1: style: lines should not be more than 80 characters.
-##   # #approx(dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year, dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$value)
-## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:125:5: style: Commented code should be removed.
-##   # #approx(dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year, dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$value)
-##     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:127:1: style: lines should not be more than 80 characters.
-##   #   dd %&gt;% filter(sex == &quot;hommes&quot;) %&gt;% .$year, dd %&gt;% filter(sex == &quot;hommes&quot;) %&gt;% .$value)
-## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:129:77: style: Trailing whitespace is superfluous.
-##   #                  lower = min(dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year), 
-##                                                                             ^
-## 03_prod_graphics.Rmd:130:77: style: Trailing whitespace is superfluous.
-##   #                  upper = max(dd %&gt;% filter(sex == &quot;femmes&quot;) %&gt;% .$year), 
-##                                                                             ^
-## 03_prod_graphics.Rmd:132:1: style: Trailing whitespace is superfluous.
-##   
-## ^~
-## 03_prod_graphics.Rmd:134:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:154:1: style: lines should not be more than 80 characters.
 ##   #https://stackoverflow.com/questions/21647982/how-to-get-the-intersection-point-of-two-vector
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:136:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:156:1: style: lines should not be more than 80 characters.
 ##     dd %&gt;% filter(sex == &quot;femmes&quot;, !is.na(value)) %&gt;% select(-sex) %&gt;% as.matrix()
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:139:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:159:1: style: lines should not be more than 80 characters.
 ##     dd %&gt;% filter(sex == &quot;hommes&quot;, !is.na(value)) %&gt;% select(-sex) %&gt;% as.matrix()
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:141:3: style: Variable and function names should be all lowercase.
-##   minV &lt;- coordinates(gIntersection(f1, f2))[1,'x']
+## 03_prod_graphics.Rmd:161:3: style: Variable and function names should be all lowercase.
+##   gIts &lt;- gIntersection(f1, f2)
 ##   ^~~~
-## 03_prod_graphics.Rmd:141:48: style: Only use double-quotes.
-##   minV &lt;- coordinates(gIntersection(f1, f2))[1,'x']
-##                                                ^~~
-## 03_prod_graphics.Rmd:141:48: style: Commas should always have a space after.
-##   minV &lt;- coordinates(gIntersection(f1, f2))[1,'x']
-##                                                ^
-## 03_prod_graphics.Rmd:142:1: style: Trailing whitespace is superfluous.
-##   
-## ^~
-## 03_prod_graphics.Rmd:146:5: style: Place a space before left parenthesis, except in a function call.
+## 03_prod_graphics.Rmd:162:5: style: Place a space before left parenthesis, except in a function call.
+##   if(!is.null(gIts)) {
+##     ^
+## 03_prod_graphics.Rmd:162:15: style: Variable and function names should be all lowercase.
+##   if(!is.null(gIts)) {
+##               ^~~~
+## 03_prod_graphics.Rmd:163:7: style: Variable and function names should be all lowercase.
+##       minV &lt;- coordinates(gIts)[1,'x']    
+##       ^~~~
+## 03_prod_graphics.Rmd:163:27: style: Variable and function names should be all lowercase.
+##       minV &lt;- coordinates(gIts)[1,'x']    
+##                           ^~~~
+## 03_prod_graphics.Rmd:163:35: style: Only use double-quotes.
+##       minV &lt;- coordinates(gIts)[1,'x']    
+##                                   ^~~
+## 03_prod_graphics.Rmd:163:35: style: Commas should always have a space after.
+##       minV &lt;- coordinates(gIts)[1,'x']    
+##                                   ^
+## 03_prod_graphics.Rmd:163:39: style: Trailing whitespace is superfluous.
+##       minV &lt;- coordinates(gIts)[1,'x']    
+##                                       ^~~~
+## 03_prod_graphics.Rmd:168:5: style: Place a space before left parenthesis, except in a function call.
 ##   if(length(unique(dd.f$value &gt;= 50)) &gt; 1) {
 ##     ^
-## 03_prod_graphics.Rmd:148:26: style: Variable and function names should be all lowercase.
+## 03_prod_graphics.Rmd:170:26: style: Variable and function names should be all lowercase.
 ##     its &lt;- tibble(year = minV, femmes = 50, hommes = 50)
 ##                          ^~~~
-## 03_prod_graphics.Rmd:149:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:171:1: style: Trailing whitespace is superfluous.
 ##     
 ## ^~~~
-## 03_prod_graphics.Rmd:151:34: style: Variable and function names should be all lowercase.
+## 03_prod_graphics.Rmd:173:34: style: Variable and function names should be all lowercase.
 ##       dd.range %&gt;% filter(year &lt; minV, !is.na(femmes)),
 ##                                  ^~~~
-## 03_prod_graphics.Rmd:156:34: style: Variable and function names should be all lowercase.
+## 03_prod_graphics.Rmd:178:34: style: Variable and function names should be all lowercase.
 ##       dd.range %&gt;% filter(year &gt; minV )
 ##                                  ^~~~
-## 03_prod_graphics.Rmd:158:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:180:1: style: lines should not be more than 80 characters.
 ##     col1 &lt;- ifelse(all(dd.range1$hommes &gt;= dd.range1$femmes), &quot;#4c6570&quot;, &quot;#b15953&quot;)
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:159:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:181:1: style: lines should not be more than 80 characters.
 ##     col2 &lt;- ifelse(all(dd.range$hommes &gt;= dd.range$femmes), &quot;#4c6570&quot;, &quot;#b15953&quot;)
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:161:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:183:1: style: lines should not be more than 80 characters.
 ##     col1 &lt;- ifelse(all(dd.range$hommes &gt;= dd.range$femmes), &quot;#4c6570&quot;, &quot;#b15953&quot;)
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:163:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:185:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:164:5: style: Place a space before left parenthesis, except in a function call.
+## 03_prod_graphics.Rmd:192:1: style: lines should not be more than 80 characters.
+##     '&lt;tr&gt;&lt;td&gt;&lt;em&gt;', dd$year,'&lt;/b&gt;&lt;/td&gt;&lt;td&gt;', txt[as.character(dd$sex), lang], '&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;',
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:192:5: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;&lt;em&gt;', dd$year,'&lt;/b&gt;&lt;/td&gt;&lt;td&gt;', txt[as.character(dd$sex), lang], '&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;',
+##     ^~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:192:29: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;&lt;em&gt;', dd$year,'&lt;/b&gt;&lt;/td&gt;&lt;td&gt;', txt[as.character(dd$sex), lang], '&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;',
+##                             ^~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:192:29: style: Commas should always have a space after.
+##     '&lt;tr&gt;&lt;td&gt;&lt;em&gt;', dd$year,'&lt;/b&gt;&lt;/td&gt;&lt;td&gt;', txt[as.character(dd$sex), lang], '&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;',
+##                             ^
+## 03_prod_graphics.Rmd:192:79: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;&lt;em&gt;', dd$year,'&lt;/b&gt;&lt;/td&gt;&lt;td&gt;', txt[as.character(dd$sex), lang], '&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;',
+##                                                                               ^~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:193:1: style: lines should not be more than 80 characters.
+##     '&lt;tr&gt;&lt;td&gt;', round(dd$value, 1), '%&lt;/td&gt;&lt;td&gt;',  dd$abs, ' ', txt['emplois', lang], '&lt;/td&gt;&lt;/tr&gt;',
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:193:5: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;', round(dd$value, 1), '%&lt;/td&gt;&lt;td&gt;',  dd$abs, ' ', txt['emplois', lang], '&lt;/td&gt;&lt;/tr&gt;',
+##     ^~~~~~~~~~
+## 03_prod_graphics.Rmd:193:37: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;', round(dd$value, 1), '%&lt;/td&gt;&lt;td&gt;',  dd$abs, ' ', txt['emplois', lang], '&lt;/td&gt;&lt;/tr&gt;',
+##                                     ^~~~~~~~~~~~
+## 03_prod_graphics.Rmd:193:60: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;', round(dd$value, 1), '%&lt;/td&gt;&lt;td&gt;',  dd$abs, ' ', txt['emplois', lang], '&lt;/td&gt;&lt;/tr&gt;',
+##                                                            ^~~
+## 03_prod_graphics.Rmd:193:69: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;', round(dd$value, 1), '%&lt;/td&gt;&lt;td&gt;',  dd$abs, ' ', txt['emplois', lang], '&lt;/td&gt;&lt;/tr&gt;',
+##                                                                     ^~~~~~~~~
+## 03_prod_graphics.Rmd:193:87: style: Only use double-quotes.
+##     '&lt;tr&gt;&lt;td&gt;', round(dd$value, 1), '%&lt;/td&gt;&lt;td&gt;',  dd$abs, ' ', txt['emplois', lang], '&lt;/td&gt;&lt;/tr&gt;',
+##                                                                                       ^~~~~~~~~~~~
+## 03_prod_graphics.Rmd:194:5: style: Only use double-quotes.
+##     '&lt;/table&gt;')
+##     ^~~~~~~~~~
+## 03_prod_graphics.Rmd:197:5: style: Place a space before left parenthesis, except in a function call.
 ##   if(flip) {
 ##     ^
-## 03_prod_graphics.Rmd:165:47: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:198:47: style: Trailing whitespace is superfluous.
 ##     hc &lt;- highchart(height = chart.height) %&gt;%  
 ##                                               ^~
-## 03_prod_graphics.Rmd:166:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:199:1: style: lines should not be more than 80 characters.
 ##       hc_add_series(dd.range1, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:166:90: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:199:90: style: Trailing whitespace is superfluous.
 ##       hc_add_series(dd.range1, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
 ##                                                                                          ^
-## 03_prod_graphics.Rmd:167:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:200:1: style: lines should not be more than 80 characters.
 ##                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5)) %&gt;%
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:168:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:201:1: style: lines should not be more than 80 characters.
 ##       hc_add_series(dd.range2, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:168:90: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:201:90: style: Trailing whitespace is superfluous.
 ##       hc_add_series(dd.range2, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
 ##                                                                                          ^
-## 03_prod_graphics.Rmd:169:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:202:1: style: lines should not be more than 80 characters.
 ##                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col2, 0.5)) %&gt;%
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:170:65: style: Put spaces around all infix operators.
-##       hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex),
+## 03_prod_graphics.Rmd:203:65: style: Put spaces around all infix operators.
+##       hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex, tp = tp),
 ##                                                                ~^
-## 03_prod_graphics.Rmd:171:47: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:204:47: style: Trailing whitespace is superfluous.
 ##                     marker = list(enabled = F, 
 ##                                               ^
-## 03_prod_graphics.Rmd:172:1: style: lines should not be more than 80 characters.
-##                                   states = list(hover = list(enabled = F))), lineWidth = 1, 
+## 03_prod_graphics.Rmd:205:1: style: lines should not be more than 80 characters.
+##                                   states = list(hover = list(enabled = F))), lineWidth = 2, 
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:172:92: style: Trailing whitespace is superfluous.
-##                                   states = list(hover = list(enabled = F))), lineWidth = 1, 
+## 03_prod_graphics.Rmd:205:92: style: Trailing whitespace is superfluous.
+##                                   states = list(hover = list(enabled = F))), lineWidth = 2, 
 ##                                                                                            ^
-## 03_prod_graphics.Rmd:174:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:207:1: style: Trailing whitespace is superfluous.
 ##       
 ## ^~~~~~
-## 03_prod_graphics.Rmd:176:47: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:209:47: style: Trailing whitespace is superfluous.
 ##     hc &lt;- highchart(height = chart.height) %&gt;%  
 ##                                               ^~
-## 03_prod_graphics.Rmd:177:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:210:1: style: lines should not be more than 80 characters.
 ##       hc_add_series(dd.range, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:177:89: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:210:89: style: Trailing whitespace is superfluous.
 ##       hc_add_series(dd.range, &quot;arearange&quot;, hcaes(x = year, low = hommes, high = femmes), 
 ##                                                                                         ^
-## 03_prod_graphics.Rmd:178:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:211:1: style: lines should not be more than 80 characters.
 ##                     enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5)) %&gt;%
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:179:65: style: Put spaces around all infix operators.
-##       hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex),
+## 03_prod_graphics.Rmd:212:65: style: Put spaces around all infix operators.
+##       hc_add_series(dd, &quot;line&quot;, hcaes(x = year, y = value, group= sex, tp = tp),
 ##                                                                ~^
-## 03_prod_graphics.Rmd:180:47: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:213:47: style: Trailing whitespace is superfluous.
 ##                     marker = list(enabled = F, 
 ##                                               ^
-## 03_prod_graphics.Rmd:181:1: style: lines should not be more than 80 characters.
-##                                   states = list(hover = list(enabled = F))), lineWidth = 1, 
+## 03_prod_graphics.Rmd:214:1: style: lines should not be more than 80 characters.
+##                                   states = list(hover = list(enabled = F))), lineWidth = 2, 
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:181:92: style: Trailing whitespace is superfluous.
-##                                   states = list(hover = list(enabled = F))), lineWidth = 1, 
+## 03_prod_graphics.Rmd:214:92: style: Trailing whitespace is superfluous.
+##                                   states = list(hover = list(enabled = F))), lineWidth = 2, 
 ##                                                                                            ^
-## 03_prod_graphics.Rmd:190:1: style: lines should not be more than 80 characters.
-##       useHTML = T, labels = list(format = '{value} %', style = list(fontSize = &quot;0.8em&quot;))
-## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:190:43: style: Only use double-quotes.
-##       useHTML = T, labels = list(format = '{value} %', style = list(fontSize = &quot;0.8em&quot;))
+## 03_prod_graphics.Rmd:228:1: style: lines should not be more than 80 characters.
+##       useHTML = T, labels = list(format = '{value} %', style = list(fontSize = ifelse(titled, &quot;0.8em&quot;, 0)))
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:228:43: style: Only use double-quotes.
+##       useHTML = T, labels = list(format = '{value} %', style = list(fontSize = ifelse(titled, &quot;0.8em&quot;, 0)))
 ##                                           ^~~~~~~~~~~
-## 03_prod_graphics.Rmd:193:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:231:1: style: lines should not be more than 80 characters.
 ##       gridLineWidth = 0.7, lineColor = &quot;#CEC6B9&quot;, gridZIndex = -1, tickLength = 0, 
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:193:83: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:231:83: style: Trailing whitespace is superfluous.
 ##       gridLineWidth = 0.7, lineColor = &quot;#CEC6B9&quot;, gridZIndex = -1, tickLength = 0, 
 ##                                                                                   ^
-## 03_prod_graphics.Rmd:196:1: style: lines should not be more than 80 characters.
-##          text = as.character(jobLabel), style = list(&quot;fontSize&quot; = &quot;1em&quot;, &quot;color&quot; = '#193442', fontWeight = &quot;normal&quot;),
-## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:196:30: style: Variable and function names should be all lowercase.
-##          text = as.character(jobLabel), style = list(&quot;fontSize&quot; = &quot;1em&quot;, &quot;color&quot; = '#193442', fontWeight = &quot;normal&quot;),
-##                              ^~~~~~~~
-## 03_prod_graphics.Rmd:196:84: style: Only use double-quotes.
-##          text = as.character(jobLabel), style = list(&quot;fontSize&quot; = &quot;1em&quot;, &quot;color&quot; = '#193442', fontWeight = &quot;normal&quot;),
-##                                                                                    ^~~~~~~~~
-## 03_prod_graphics.Rmd:197:71: style: Trailing whitespace is superfluous.
-##           floating = T, align = ifelse(lang == &quot;AR&quot;, &quot;left&quot;, &quot;right&quot;), 
-##                                                                       ^
-## 03_prod_graphics.Rmd:205:13: style: Trailing whitespace is superfluous.
-## code_sub.edu 
-##             ^
-## 03_prod_graphics.Rmd:206:13: style: Trailing whitespace is superfluous.
-## code_sub.sci 
-##             ^
-## 03_prod_graphics.Rmd:207:13: style: Trailing whitespace is superfluous.
-## code_sub.art 
-##             ^
-## 03_prod_graphics.Rmd:208:14: style: Trailing whitespace is superfluous.
-## code_sub.mgmt 
-##              ^
-## 03_prod_graphics.Rmd:210:4: style: Place a space before left parenthesis, except in a function call.
+## 03_prod_graphics.Rmd:232:1: style: lines should not be more than 80 characters.
+##       labels = list(y = 13, enabled =  ifelse(titled, T, F)), reversed = ifelse(lang == &quot;AR&quot;, T, F)
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:234:1: style: Trailing whitespace is superfluous.
+##   
+## ^~
+## 03_prod_graphics.Rmd:235:5: style: Place a space before left parenthesis, except in a function call.
+##   if(titled) {
+##     ^
+## 03_prod_graphics.Rmd:237:27: style: Variable and function names should be all lowercase.
+##       text = as.character(jobLabel), 
+##                           ^~~~~~~~
+## 03_prod_graphics.Rmd:237:37: style: Trailing whitespace is superfluous.
+##       text = as.character(jobLabel), 
+##                                     ^
+## 03_prod_graphics.Rmd:238:1: style: lines should not be more than 80 characters.
+##       style = list(&quot;fontSize&quot; = &quot;1em&quot;, &quot;color&quot; = '#193442', fontWeight = &quot;normal&quot;),
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:238:50: style: Only use double-quotes.
+##       style = list(&quot;fontSize&quot; = &quot;1em&quot;, &quot;color&quot; = '#193442', fontWeight = &quot;normal&quot;),
+##                                                  ^~~~~~~~~
+## 03_prod_graphics.Rmd:239:67: style: Trailing whitespace is superfluous.
+##       floating = T, align = ifelse(lang == &quot;AR&quot;, &quot;right&quot;, &quot;left&quot;), 
+##                                                                   ^
+## 03_prod_graphics.Rmd:247:8: style: Trailing whitespace is superfluous.
+##       )    
+##        ^~~~
+## 03_prod_graphics.Rmd:248:4: style: Trailing whitespace is superfluous.
+##   }    
+##    ^~~~
+## 03_prod_graphics.Rmd:249:1: style: Trailing whitespace is superfluous.
+##   
+## ^~
+## 03_prod_graphics.Rmd:256:4: style: Place a space before left parenthesis, except in a function call.
 ## for(lang in colnames(txt)) {
 ##    ^
-## 03_prod_graphics.Rmd:211:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:257:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:218:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:263:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:220:9: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:267:1: style: Trailing whitespace is superfluous.
+##   
+## ^~
+## 03_prod_graphics.Rmd:269:1: style: Trailing whitespace is superfluous.
+##   
+## ^~
+## 03_prod_graphics.Rmd:271:9: style: Only use double-quotes.
 ##     txt['source', lang], &quot;: &quot;,
 ##         ^~~~~~~~
-## 03_prod_graphics.Rmd:221:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:272:1: style: lines should not be more than 80 characters.
 ##     htmlLink( &quot;https://www.bfs.admin.ch/bfs/fr/home/statistiques/travail-remuneration/activite-professionnelle-temps-travail/actifs-occupes/profession-situation-profession.assetdetail.4362786.html&quot;, txt['source.name', lang] ), &quot; | &quot;,
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:221:204: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:272:204: style: Only use double-quotes.
 ##     htmlLink( &quot;https://www.bfs.admin.ch/bfs/fr/home/statistiques/travail-remuneration/activite-professionnelle-temps-travail/actifs-occupes/profession-situation-profession.assetdetail.4362786.html&quot;, txt['source.name', lang] ), &quot; | &quot;,
 ##                                                                                                                                                                                                            ^~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:222:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:273:1: style: lines should not be more than 80 characters.
 ##     txt['code', lang], &quot;: &quot;, htmlLink(&quot;https://github.com/jbkunst/highcharter&quot;, txt['code.name', lang]),
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:222:9: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:273:9: style: Only use double-quotes.
 ##     txt['code', lang], &quot;: &quot;, htmlLink(&quot;https://github.com/jbkunst/highcharter&quot;, txt['code.name', lang]),
 ##         ^~~~~~
-## 03_prod_graphics.Rmd:222:85: style: Only use double-quotes.
+## 03_prod_graphics.Rmd:273:85: style: Only use double-quotes.
 ##     txt['code', lang], &quot;: &quot;, htmlLink(&quot;https://github.com/jbkunst/highcharter&quot;, txt['code.name', lang]),
 ##                                                                                     ^~~~~~~~~~~
-## 03_prod_graphics.Rmd:225:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:275:1: style: lines should not be more than 80 characters.
+##     htmlLink(&quot;https://twitter.com/duc_qn&quot;, &quot;@duc_qn&quot;), &quot; &quot;, txt['inspiredBy', lang], &quot; &quot;,
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:275:65: style: Only use double-quotes.
+##     htmlLink(&quot;https://twitter.com/duc_qn&quot;, &quot;@duc_qn&quot;), &quot; &quot;, txt['inspiredBy', lang], &quot; &quot;,
+##                                                                 ^~~~~~~~~~~~
+## 03_prod_graphics.Rmd:276:1: style: lines should not be more than 80 characters.
+##     htmlLink(&quot;http://flowingdata.com/2017/09/11/most-female-and-male-occupations-since-1950/&quot;, &quot;Flowing Data&quot;)
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:278:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:230:1: style: lines should not be more than 80 characters.
-##       div(class = &quot;descr&quot;, HTML(paste0('&lt;img src=&quot;https://interactive.swissinfo.ch/assets/Interactive_icon.svg.png&quot; width=&quot;12&quot; align=&quot;top&quot;&gt;&amp;nbsp; '))),
-## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:231:24: style: Only use double-quotes.
-##       tags$h3(HTML(txt['h3.1', lang])),
-##                        ^~~~~~
-## 03_prod_graphics.Rmd:233:24: style: Only use double-quotes.
-##       tags$h3(HTML(txt['h3.2', lang])),
-##                        ^~~~~~
-## 03_prod_graphics.Rmd:235:24: style: Only use double-quotes.
-##       tags$h3(HTML(txt['h3.3', lang])),
-##                        ^~~~~~
-## 03_prod_graphics.Rmd:237:24: style: Only use double-quotes.
-##       tags$h3(HTML(txt['h3.4', lang])),
-##                        ^~~~~~
-## 03_prod_graphics.Rmd:239:24: style: Only use double-quotes.
-##       tags$h3(HTML(txt['h3.5', lang])),
-##                        ^~~~~~
-## 03_prod_graphics.Rmd:242:26: style: Trailing whitespace is superfluous.
-##       HTML(iframeresizer)  
-##                          ^~
-## 03_prod_graphics.Rmd:244:69: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:282:1: style: lines should not be more than 80 characters.
+##       tags$head(includeHTML(style_swi_highcharter_centered()), includeCSS(swi_highlight_css())),
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:285:20: style: Only use double-quotes.
+##         paste0(txt['descr1', lang], &quot; &quot;, txt['descr2', lang]))),
+##                    ^~~~~~~~
+## 03_prod_graphics.Rmd:285:46: style: Only use double-quotes.
+##         paste0(txt['descr1', lang], &quot; &quot;, txt['descr2', lang]))),
+##                                              ^~~~~~~~
+## 03_prod_graphics.Rmd:287:19: style: Only use double-quotes.
+##       h3(HTML(txt['h3.1', lang])),
+##                   ^~~~~~
+## 03_prod_graphics.Rmd:291:19: style: Only use double-quotes.
+##       h3(HTML(txt['h3.2', lang])),
+##                   ^~~~~~
+## 03_prod_graphics.Rmd:295:19: style: Only use double-quotes.
+##       h3(HTML(txt['h3.3', lang])),
+##                   ^~~~~~
+## 03_prod_graphics.Rmd:299:19: style: Only use double-quotes.
+##       h3(HTML(txt['h3.4', lang])),
+##                   ^~~~~~
+## 03_prod_graphics.Rmd:303:19: style: Only use double-quotes.
+##       h3(HTML(txt['h3.5', lang])),
+##                   ^~~~~~
+## 03_prod_graphics.Rmd:306:1: style: Trailing whitespace is superfluous.
+##       
+## ^~~~~~
+## 03_prod_graphics.Rmd:307:12: style: Commas should always have a space after.
+##       br(),br(),
+##            ^
+## 03_prod_graphics.Rmd:310:37: style: Only use double-quotes.
+##       div(class = &quot;descr&quot;, HTML(txt['descr2', lang])),
+##                                     ^~~~~~~~
+## 03_prod_graphics.Rmd:312:1: style: Trailing whitespace is superfluous.
+##       
+## ^~~~~~
+## 03_prod_graphics.Rmd:316:69: style: Trailing whitespace is superfluous.
 ##     file =  paste0(&quot;jobGender_flip_&quot;, lang, &quot;.html&quot;), libdir = &quot;js&quot;)  
 ##                                                                     ^~
-## 03_prod_graphics.Rmd:245:1: style: Trailing whitespace is superfluous.
+## 03_prod_graphics.Rmd:317:1: style: Trailing whitespace is superfluous.
 ##   
 ## ^~
-## 03_prod_graphics.Rmd:259:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:321:1: style: lines should not be more than 80 characters.
+##       tags$head(includeHTML(style_swi_highcharter_centered()), includeCSS(swi_highlight_css())),
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:324:20: style: Only use double-quotes.
+##         paste0(txt['descr2', lang]))),
+##                    ^~~~~~~~
+## 03_prod_graphics.Rmd:326:19: style: Only use double-quotes.
+##       h3(HTML(txt['h3.1b', lang])),
+##                   ^~~~~~~
+## 03_prod_graphics.Rmd:330:19: style: Only use double-quotes.
+##       h3(HTML(txt['h3.2b', lang])),
+##                   ^~~~~~~
+## 03_prod_graphics.Rmd:336:71: style: Trailing whitespace is superfluous.
+##     file =  paste0(&quot;jobGender_steady_&quot;, lang, &quot;.html&quot;), libdir = &quot;js&quot;)  
+##                                                                       ^~
+## 03_prod_graphics.Rmd:337:1: style: Trailing whitespace is superfluous.
+##   
+## ^~
+## 03_prod_graphics.Rmd:351:1: style: lines should not be more than 80 characters.
 ##   ori.files &lt;- list.files(&quot;output&quot;, full.names = T)[list.files(&quot;output&quot;) != &quot;bak&quot;]
 ## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## 03_prod_graphics.Rmd:263:1: style: lines should not be more than 80 characters.
+## 03_prod_graphics.Rmd:355:1: style: lines should not be more than 80 characters.
 ##   files_tomove &lt;- lapply(files, function(x) list.files(pattern = x)) %&gt;% unlist()
-## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</code></pre>
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:362:3: style: Place a space before left parenthesis, except in a function call.
+## if(teaserify) {
+##   ^
+## 03_prod_graphics.Rmd:363:1: style: lines should not be more than 80 characters.
+##   teaser &lt;- c(code_sub.sante, code_sub.edu, code_sub.sci, code_sub.art, code_sub.mgmt, code_sub.sante) %&gt;% map(~ plot_code(data, .x, titled = F))
+## ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## 03_prod_graphics.Rmd:370:39: style: Trailing whitespace is superfluous.
+##   file = &quot;teaser.html&quot;, libdir = &quot;js&quot;)  
+##                                       ^~
+## 03_prod_graphics.Rmd:371:1: style: Trailing whitespace is superfluous.
+##     
+## ^~~~</code></pre>
 
 
 

@@ -16,10 +16,7 @@ output:
 ## Notes
 
 
-
-
-
-
+Plus le degré scolaire est élevé, plus la part des femmes dans le corps enseignant diminue (https://www.bfs.admin.ch/bfs/fr/home/statistiques/situation-economique-sociale-population/egalite-femmes-hommes/formation/corps-enseignant.html)
 
 
 
@@ -35,10 +32,33 @@ output:
  
 ### Intro 
 
-Homme sage-femme, femme électricienne, ... Masculins ou féminins, les stéréotypes professionnels restent tenaces en Suisse. La Suisse demeure à la traîne en ce qui concerne le travail des femmes. Le marché du travail helvétique est même le plus discriminatoire d’Europe concernant l’égalité homme-femme, selon une étude du journal britannique The Economist. Le point en graphiques sur l'évolution, ou la stagnation, de la ségrégration de genre professionnelle en Suisse en un demi-siècle.
+Homme sage-femme, femme électricienne, ... Masculins ou féminins, les stéréotypes professionnels restent tenaces en Suisse. La Suisse demeure à la traîne en ce qui concerne le travail des femmes. Le marché du travail helvétique est considéré comme le plus discriminatoire d’Europe concernant l’égalité homme-femme, selon le journal britannique The Economist. Tour d'horizon en graphiques sur l'évolution, ou la stagnation, de la ségrégration de genre professionnelle en Suisse en un demi-siècle.
 
+
+Le modèle familial bourgeois traditionnel, où monsieur travaille et madame garde les enfants, a longtemps persisté en Suisse. La Suisse n'ayant pas connu les conflits mondiaux du XXème siècle, le travail féminin n'a pas été poussé pour combler le manque de travailleur. 
+
+Aujourd'hui, de nombreux hommmes et femmes pratiquent la même profession, mais de nombreux métiers demeurent des bastions masculins ou féminins. Le graphique ci-dessous illustre ce phénomène et montre la représentation hommes/femmes des 30 emplois les plus répandus en Suisse en 2016:
+
+CHART DW 1
 
 ** [Les 30 emplois les plus répandus en Suisse en 2016 et leurs proportions de femmes et d'hommes](https://www.datawrapper.de/_/6CPSs/) ** 
+
+**Une lente évolution du modèle familial traditionnel** 
+
+En 1970, les femmes ne représentaient qu'un tiers de la population active. Aujourd'hui, elles représentent plus de 46%. Elles gardent majoritairement leur emploi une fois mères, mais le plus souvent à temps partiel. 
+
+CHart line DW
+
+** Changement de sexe majoritaire **
+
+swissinfo.ch a passé crible les données de plus de 500 professions sur près de 50 années afin d'établir les métiers ayant connus les plus grands renversements de majorité sexe. 
+
+
+
+
+
+
+
 
 
 #### 1 Une lente évolution du modèle familial traditionnel  
@@ -62,7 +82,6 @@ Des professions qui étaient majoritairement masculines
 
 
 #### 5 Ceci dit, la ségrégration demeure tenace
-
 
 
 Mais la ségrégration de genre professionnelle persiste
@@ -104,6 +123,7 @@ https://www.rts.ch/info/suisse/5145613-masculins-ou-feminins-les-stereotypes-pro
 
 ## Related
 
+* [OFS on CNN Money cost-gender-inequality-switzerland](https://www.cnnmoney.ch/shows/big-picture/videos/cost-gender-inequality-switzerland)
 * [U.S. jobs most often held by men vs. U.S. jobs most often held by women](https://www.reddit.com/r/dataisbeautiful/comments/7ctf5r/us_jobs_most_often_held_by_men_vs_us_jobs_most/?st=jaat2uk3&sh=5080b4a2)
 * [Most Female and Male Occupations Since 1950](https://flowingdata.com/2017/09/11/most-female-and-male-occupations-since-1950/)
 
