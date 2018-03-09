@@ -225,7 +225,8 @@ plot_code <- function(data, code.sub, titled = T) {
     ) %>%
     hc_yAxis(
       min = 0, max = 100, tickAmount = 3, opposite = ifelse(lang == "AR", T, F),
-      useHTML = T, labels = list(format = '{value} %', style = list(fontSize = ifelse(titled, "0.8em", 0)))
+      useHTML = T, labels = list(format = '{value} %', style = list(fontSize = ifelse(titled, "0.8em", 0)), 
+                                 align = ifelse(lang == "AR", "left", "right"))
     ) %>%
     hc_xAxis(
       gridLineWidth = 0.7, lineColor = "#CEC6B9", gridZIndex = -1, tickLength = 0, 
@@ -237,7 +238,7 @@ plot_code <- function(data, code.sub, titled = T) {
       text = as.character(jobLabel), 
       style = list("fontSize" = "1em", "color" = '#193442', fontWeight = "normal"),
       floating = T, align = ifelse(lang == "AR", "right", "left"), 
-      useHTML = T, x = ifelse(lang == "AR", 0, 27), y = -32
+      useHTML = T, x = ifelse(lang == "AR", -25, 27), y = -32
     ) %>%
       hc_chart(
         #backgroundColor = bg.colour,
