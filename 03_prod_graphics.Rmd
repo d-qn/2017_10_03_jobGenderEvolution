@@ -197,18 +197,21 @@ plot_code <- function(data, code.sub, titled = T) {
   if(flip) {
     hc <- highchart(height = chart.height) %>%  
       hc_add_series(dd.range1, "arearange", hcaes(x = year, low = hommes, high = femmes), 
-                    enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5)) %>%
+                    enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5),
+                    marker = list(enabled = F)) %>%
       hc_add_series(dd.range2, "arearange", hcaes(x = year, low = hommes, high = femmes), 
-                    enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col2, 0.5)) %>%
+                    enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col2, 0.5),
+                    marker = list(enabled = F)) %>%
       hc_add_series(dd, "line", hcaes(x = year, y = value, group= sex, tp = tp),
-                    marker = list(enabled = F, 
+                    marker = list(enabled = F,
                                   states = list(hover = list(enabled = F))), lineWidth = 2, 
                     color = c( "#b15953", "#4c6570"))
       
   } else {
     hc <- highchart(height = chart.height) %>%  
       hc_add_series(dd.range, "arearange", hcaes(x = year, low = hommes, high = femmes), 
-                    enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5)) %>%
+                    enableMouseTracking = F, lineWidth = 0, fillColor = hex_to_rgba(col1, 0.5),
+                    marker = list(enabled = F)) %>%
       hc_add_series(dd, "line", hcaes(x = year, y = value, group= sex, tp = tp),
                     marker = list(enabled = F, 
                                   states = list(hover = list(enabled = F))), lineWidth = 2, 
@@ -231,7 +234,7 @@ plot_code <- function(data, code.sub, titled = T) {
     hc_xAxis(
       gridLineWidth = 0.7, lineColor = "#CEC6B9", gridZIndex = -1, tickLength = 0, 
       labels = list(y = 13, enabled =  ifelse(titled, T, F)), reversed = ifelse(lang == "AR", T, F)
-    )
+    ) 
   
   if(titled) {
     hc2 %<>% hc_title(

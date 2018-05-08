@@ -1,0 +1,76 @@
+code,EN,FR,DE,IT,PT,AR,RU,ES,JA,ZH
+main.title1,"Previously <span class='hl sblue'>male</span> dominated, now majority <span class='hl sred'>female</span>","Autrefois <span class='hl sblue'>masculin</span>, désormais majoritairement <span class='hl sred'>féminin</span> ","Ursprünglich <span class='hl sblue'>männlich</span>, dominiert, heute mehrheitlich <span class='hl sred'>weiblich</span> ",,"Anteriormente <span class='hl sblue'>masculino</span>, agora predominantemente<span class='hl sred'>feminino</span> ",في السابق<span class='hl sblue'>كانت ذكورية</span>، وأصبحت الآن ذات أغلبية<span class='hl sred'>نسائية</span>,"Профессии, в которых в прошлом доминировали<span class='hl sblue'>мужчины</span>, а
+теперь<span class='hl sred'>женщины</span>","Otrora<span class='hl sblue'>masculino</span>, actualmente, mayoritariamente <span class='hl sred'>femenino</span> ",かつては <span class='hl sblue'>男性社会</span>だったが、 <span class='hl sred'>女性社会</span>に転じた職業,过去 <span class='hl sblue'>男性</span> 占主导地位，现如今逾半数从业者为 <span class='hl sred'>女性</span>
+descr1,Professions with the biggest increase in females and where women have replaced men as the majority. ,Professions ayant connu les plus grandes augmentations du nombre de femmes et un renversement de la majorité de genre.,Berufe mit dem grössten Zuwachs an Frauen und in denen Frauen die Männer als Mehrheit ersetzt haben. ,,Profissões com o maior aumento de mulheres e onde as mulheres substituíram homens como maioria.,مهن شهدت أكبر الزيادات في عدد النساء وعكسا للأغلبية على مستوى النوع,"Профессии, в которых число женщин выросло особенно заметно и в которых
+женщины завоевали большинство
+
+",Profesiones que han registrado un mayor aumento en el número de mujeres y una modificación en la mayoría de género.,女性の割合が男性を上回った職業,女性从业人数增幅最大，且女性雇员人数日益超越男性雇员、成为中坚力量的行业。
+descr2,Percentage of <span class='hl sblue'>men</span>/<span class='hl sred'>women</span> by profession.,Pourcentages d'<span class='hl sblue'>hommes</span>/<span class='hl sred'>femmes</span> par profession. ,Anteil d'<span class='hl sblue'>Männer</span>/<span class='hl sred'>Frauen</span> nach Beruf.,,Porcentagem de<span class='hl sblue'>homens</span>/<span class='hl sred'>mulheres</span> por profissão.,النسب المائوية لـ <span class='hl sblue'>الرجال</span>/<span class='hl sred'>والنساء</span>حسب المهن.,"Процентная доля<span class='hl sblue'>мужчин</span>/<span class='hl sred'>и женщин</span>по профессиям
+
+",Porcentajes de<span class='hl sblue'>hombres</span>/<span class='hl sred'>mujeres</span> por profesión.,職業別の <span class='hl sred'>女性</span>の割合と<span class='hl sblue'>男性</span>の割合,各行业<span class='hl sblue'>男性</span>/<span class='hl sred'>女性</span>比例 。
+hommes,men,hommes,Männer,,homens,رجال ,мужчины,hombres,男性,男性
+femmes,women,femmes,Frauen,,mulheres,نساء,женщины,mujeres,女性,女性
+emplois,jobs,emplois,Berufe,,empregos,وظائف ,профессии,empleos,職業,职业
+h3.1,Health professions,Professions de la santé,Gesundheitsberufe,,Profissões da saúde,مهن القطاع الصحي,Профессии в сфере здравоохранения,Profesiones de la salud,医療従事者,医疗保健行业
+h3.2,Education and teaching,Professions de l'éducation et de l'enseignement,Erziehung und Lehre,,Educação e ensino,مهن التربية والتعليم ,Образование и преподавание,Profesiones de la educación y la enseñanza,教育・指導,教育与教学
+h3.3,"Social, human and natural science professions","Professions en sciences sociales, humaines et naturelles",Soziale Berufe sowie Human- und Naturwissenschaftsberufe,,"Profissões de ciências sociais, humanas e naturais",مهن العلوم الإجتماعية والإنسانية والطبيعية,"Профессии в сфере естественных наук, социального обеспечения","Profesiones en ciencias sociales, humanas y naturales",社会・人文・自然科学者,社会、人文及自然科学专业
+h3.4,Artistic professions,Professions artistiques,Künstlerische Berufe,,Profissões artísticas,مهن فنية ,Творческие профессии,Profesiones artísticas,芸術家,艺术相关职业
+h3.5,"Management, administration, legal professions and communication","Professions du management, de l'administration, judiciaires et de la communication","Berufe im Management, in der Administration, Kommunikation und juristische Berufe",,"Gestão, administração, profissões jurídicas e comunicação",مهن التسيير والتصرف والإدارة والقانون والإتصال  ,"Менеджмент, управление, юриспруденция, коммуникация","Profesiones de gestión, administración, judiciales y de la comunicación",経営・管理・法律専門家、広報,管理、行政、法律以及传播业
+main.title2,Professions where women are catching up but men remain the majority,"Métiers proches du renversement, mais qui demeurent majoritairement <span class='hl sblue'>masculins</span>","Berufe, in denen Frauen aufholen, die Männer aber eine Mehrheit bleiben",,"Profissões onde as mulheres estão se recuperando, mas os homens continuam sendo a maioria","مهن تقترب من لحظة عكس الإتجاه، لكنها تظل في
+الغالب<span class='hl sblue'>ذكورية</span>","Профессии, в которых число женщин растет, но мужчины сохраняют пока большинство
+","Profesiones cercanas a un cambio, pero que se mantienen  mayoritariamente <span class='hl sblue'>masculinas</span>",女性の割合が増えているが、なお男性が過半を占める職業,女性职场地位正日益提高、但男性仍然占据主导地位的职业
+main.title3,"Professions most marked by gender, where little has changed in 50 years","Les professions les plus sexuées, pour lesquels peu a changé en 50 ans","Die am meisten durch das Geschlecht geprägten Berufe, in denen sich in den letzten 50 Jahren wenig geändert hat.",,"Profissões mais marcadas por gênero, onde pouco mudou em 50 anos",المهن الأكثر ارتباطا بالجنس والتي لم يطرأ عليها تغيير يُذكر خلال 50 عاما,"Профессии, в которых особенно выражена гендерная составляющая, но в которых на последние полвека ничего не изменилось","Profesiones más diferenciadas por sexo, cuya situación ha cambiado poco en 50 años",男性社会で、過去５０年ほとんど変化がない職業,过去50年来男女从业者人数近乎一成不变、且性别差异最明显的职业
+h3.1b,Professions that remain male-dominated,Les métiers qui restent chargés de testostérone,"Berufe, die männlich dominiert bleiben",,Profissões que permanecem dominadas pelos homens,المهن الذي تظل مُسيطرا عليها من طرف الذكور,"Профессии, в которых мужчины остаются в большинстве",Profesiones que siguen cargadas de testosterona,男性支配の職業,依然以男性为主体的行业
+h3.2b,Professions that remain female-dominated,Les professions immuablement féminines,"Berufe, die weiblich dominiert bleiben",,Profissões que permanecem dominadas pelas mulheres,المهن التي تظل نسوية بامتياز,"Профессии, в которых женщины остаются в большинстве",Profesiones inmutablemente femeninas,女性支配の職業,依然以女性为主体的行业
+source,Source,source,Quelle,Fonte,Fonte,المصدر,Источник,Fuente,出典,来源
+source.name,Federal Office of Statistics,Office fédéral de la statistique,Bundesamt für Statistik,,Departamento Federal de Estatística,المكتب الفدرالي للإحصاء,Федеральное ведомство статистики (BfS),Oficina Federal de Estadísticas,連邦統計局,瑞士联邦统计局
+code,Code,code,Code,Codice,código,الرمز,Код,código,コード,代码
+code.name,highcharter,highcharter,highcharter,highcharter,highcharter,highcharter,схема,highcharter,highcharter,highcharter
+inspiredBy,", inspired from",", inspiré par ",", inspiriert von",,", inspirado em",مستوحى من ,на основе,",inspirado por",着想,，新闻来源
+111.01,Agriculture,Agriculteurs,Landwirte,,Agricultura,مزارعون,Аграрный сектор,Agricultores,農業,农业
+114.02,Floristry,Fleuristes,Floristen,,Florista,بيع الزهور,Флорист,Floristas,花屋,花艺设计
+211.01,Cheese and dairy production,Fromagers et laitiers,Käser und Molkereiproduzenten,,Produção de queijo e leite,إنتاج الحليب والأجبان,Производство сыра и молочной продукции,Queseros y lecheros,チーズ、乳製品,奶酪及乳制品生产
+211.02,Butchery,"Bouchers, charcutiers",Metzger,,Açougue,الجزارون ,Мясник,Carniceros y charcuteros,精肉店,屠宰业
+211.03,Bakery and cake/ sweet making,"Boulangers, pâtissiers et confiseurs","Bäcker, Konditeure und Confiseure",,Padaria e confeitaria,الخبازون، طهاة المعجنات والحلويات,Булочник/кондитер,"Panaderos, pasteleros y confiteros",パン・菓子店,面包、蛋糕和甜品制作
+253.02,Car mechanics,Mécaniciens en automobiles,Automechaniker,,Mecânica de carros,إصلاح السيارات,Автослесарь,Mecánicos automovilistas,自動車整備,汽车修理
+291.03,Stock/warehouse keeping,"Magasiniers, manutentionnaires","Lageristen, Verpacker",,Conservação de estoque/armazém,أمناء المستودعات، تفريغ البضائع,Логистика/складской работник,Almaceneros y operarios de almacén,卸問屋,库存储备/仓库物资保管
+311.04,Mechanical engineering,Ingénieurs en machines,Maschineningenieure,,Engenharia Mecânica,هندسة الآلات,Инженер,Ingenieros en maquinarias,機械技師,机械工程
+412.04,Painting and decorating,"Peintres, tapissiers",Maler und Tapezierer,,Pintura e decoração,الدهن والتزويق,Живопись и дизайн,Pintores y tapiceros,塗装,油漆及装潢
+521.01,Advertising ,Spécialistes en publicité,Werber,,Propaganda,الدعاية والإعلان,Реклама,Especialistas en publicidad,広告,广告业
+521.02,Public relations,Spécialistes en relations publiques,Spezialisten für Public Relations,,Relações públicas,علاقات عامة,Пиар,Especialistas en relaciones públicas,広報,公关
+521.03,Marketing,Spécialistes en marketing,Marketingspezialisten,,Marketing,تسويق ,Маркетинг,Especialistas en mercadotecnia,マーケティング,市场营销
+532.04,Driving school instruction and related,Moniteurs d'auto-école et experts en automobiles,Fahrschullehrer,,Autoescola,مدارس تعليم السياقة وتوابعها,Инструктор в автошколе,Monitores en auto-escuelas y expertos en automóviles,自動車教習所の教官、自動車専門家,驾校教学及相关职业
+711.04,Human resources management,Spécialistes du personnel,Personalfachleute,,Gerenciamento de recursos humanos,إدارة شؤون الموظفين,Кадры,Especialistas en personal,人事,人力资源管理
+721.02,Public administration,Fonctionnaires d'administration,Verwaltungsangestellte,,Administração pública,الإدارة العمومية,Общественное управление,Funcionarios de administración,公共経営,公共管理
+721.03,Accountancy,Comptables,Buchhalter,,Contabilidade,مُحاسبة ,Бухгалтер,Contadores,会計士,会计
+721.04,Property sales and management,Spécialistes en immobilier et gérants,Immobilienhändler und Immobilienverwalter,,Venda de propriedades e gestão,بيع العقارات وإدارتها ,Риэлтор,Especialistas inmobiliarios y gerentes,不動産販売・管理,物业销售及管理
+751.01,"Judges, prosecutors","Juges, procureurs","Richter, Staatsanwälte",,"Juízes, procuradores",القضاء والإدعاء,"Судьи, прокуроры","Jueces, procuradores",裁判官、検察官,法官、检察官
+751.02,Court clerks,Greffiers,Gerichtsschreiber,,Tabeliões,موظفو المحاكم,Помощник судьи,Secretarios judiciales,裁判所書記官,法院书记员
+751.04,Other judicial work,Autres représentants de la justice et conseillers juridiques,Andere Vertreter der Justiz und juristische Berater,,Outro trabalho judicial,وظائف قضائية وقانونية أخرى,Другие юридические профессии,Otros representantes de la justicia y consejeros jurídicos,その他司法関連,其他司法工作
+812.01,Librarian,Bibliothécaires,Bibliothekare,,Bibliotecário,مكتبيون ,Библиотекарь,Bibliotecarios,司書,图书馆管理员
+822.01,Acting,Acteurs,Schauspieler,,Ator,التمثيل ,Актеры театра и кино,Actores,俳優,演艺业
+824.07,Decorator/ window dresser,"Décorateurs, étalagistes","Dekorateure, Schaufensterdekorateure",,Decorador,الديكور وتزيين النوافذ,Декоратор/дизайнер,"Decoradores, escaparatistas",装飾家,装饰设计师/商品橱窗设计师
+824.09,Interior design,Architectes d'intérieurs,Innenarchitekten,,Design de interiores,تصميم داخل البيوت ,Пространственный дизайн,Arquitectos de interiores,インテリアデザイン,室内设计
+831.02,Specialist education,Educateurs spécialisés,Fachpädagogen,,Educação especialista,مُربّون خاصون ,Специалист в области образования,Educadores especializados,専門家教育,专门人才培训
+843.01,High school teacher,Enseignants des classes supérieures,Gymnasiallehrer,,Professor de escola secundária,مدرسو المعاهد الثانوية,Профессор высшей школы,Profesores de clases superiores,高校教諭,高中老师
+844.01,Primary school teacher,Instituteurs (école primaire),Primarschullehrer,,Professor de escola primária,معلمو المدارس الإبتدائية,Учитель начальной школы,Profesores de educación primaria,小学校教諭,小学教师
+845.01,Nursery school teacher,Educatrices de la petite enfance,Kleinkinderzieher,,Professor de escola maternal,مربيات الحضانة ورياض الأطفال ,Учитель старших классов,Educadoras de preprimaria ,幼稚園教諭,幼教
+846.04,Design and handicrafts teacher,"Professeurs de dessin, maîtres d'activités créatrices manuelles",Mal- und Werklehrer,,Professora de design e artesanato,أساتذه الرسم والأعمال اليدوية ,Учитель труда,"Profesores de dibujo, maestros de actividades creadoras manuales",デザイン・手工芸教師,手工艺教师
+846.05,Physical education teacher,Professeurs de gymnastique et d'éducation physique,Sportlehrer,,Professor de educação física,مدرسو التربية البدنية ,Учитель физкультуры,Profesores de gimnasia y educación física,体育教師,体育老师
+851.01,Economic sciences,Professions des sciences économiques,Berufe der Wirtschaftswissenschaften,,Ciências econômicas,مهن العلوم الإقتصادية ,"Экономические науки
+
+",Profesiones de ciencias económicas,経済学,经济学
+851.03,Psychologists and career advisors,Psychologues et conseillers en orientation professionnelle,Psychologen und Berufsberater,,Psicólogos e conselheiros de carreira,أطباء نفسانيون ومرشدون في مجال التوجيه المهني ,Психология и профориентация,Psicólogos  y consejeros en orientación profesional,心理学者、キャリアアドバイザー,心理学家和职业顾问
+853.01,Biologists,Biologistes,Biologen,,Biólogos,بيولوجيون,Биолог,Biólogos,生物学者,生物学家
+861.01,Doctors,Médecins,Ärzte,,Médicos,أطباء ,Врач,Médicos,医師,医生
+861.02,Medical assistants,Assistants médicaux,Medizinische Praxisassistenten,,Assistentes médicos,مساعدو أطباء,Младший медперсонал,Asistentes médicos,医療事務,医师助理
+861.03,Pharmacists,Pharmaciens,Apotheker,,Farmacêuticos,صيادلة ,Фармацевты,Farmacéuticos,薬剤師,药剂师
+862.01,Physiotherapists and occupational therapists,"Physiothérapeutes, ergothérapeutes","Physiotherapeuten, Ergotherapeuten",,Fisioterapeutas e terapeutas ocupacionais,معالجون طبيعيون ووظيفيون,Физиотерапия,"Fisioterapeutas, ergoterapeutas",理学・作業療法士,物理治疗师及职业治疗师
+862.03,Alternative medicine and naturopathy,"Guérisseurs, naturopathes",Alternativmediziner und Naturheilkundler,,Medicina alternativa e naturopatia,الطب البديل والعلاج الطبيعي,Альтернативная медицина и натуропатия,"Curanderos, naturópatas",代替医療・自然療法士,替代医学和自然疗法
+862.04,Opticians,Opticiens,Optiker,,Ópticas,طب العيون ,Оптика,Ópticos,眼鏡技師,验光配镜师
+862.07,Other therapeutic and medical professions,Autres professions de la thérapeutique et de la technique médicale,Andere therapeutische und medizinische Berufe,,Outras profissões terapêuticas e médicas,مهن طبية وعلاجية أخرى,Другие медицинские и терапевтические профессии,Otras profesiones de la terapéutica y de la técnica médica,その他療養・医療関係,其他治疗及医疗职业
+862.08,Medical laboratory work,Laborantins médicaux,Medizinische Laboranten,,Trabalho de laboratório médico,العمل في المختبرات الطبية,Лаборант,Técnicos de laboratorios médicos,臨床検査技師,医疗化验
+864.01,Veterinary surgeons,Vétérinaires,Tierärzte,,Cirurgiões veterinários,بياطرة,Ветеринар,Veterinarios,獣医,兽医
+865.03,Psychiatric nursing,Infirmiers en psychiatrie,Psychiatriepfleger,,Enfermagem psiquiátrica,التمريض النفسي,Психиатр,Enfermeros en psiquiatría,精神科看護,精神科护理
+865.04,Qualified nurses,Infirmiers diplômés,Diplomierte Pfleger,,Enfermeiros qualificados,ممرضون متحصلون على شهائد,Старший медперсонал,Enfermeros diplomados,有資格看護師,合格执业护士
+865.07,Other health care professions,Autres professions soignantes,Andere pflegerische Berufe,,Outras profissões de cuidados de saúde,وظائف أخرى في مجال الرعاية الصحية,Другие профессии в области здравоохранения,Otras profesiones de la salud,その他ヘルスケア,其他医疗保健职业
