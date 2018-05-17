@@ -41,6 +41,7 @@ library(rgeos)
 
 # Personnes actives occupées de 15 ans ou plus selon la profession exercée (nomenclature: NSP 2000), le sexe et la nationalité
 raw.xls <- "data/su-f-40.02.03.02.01.03.20.xlsx"
+
 column_names <- c('division',	'classe', 'groupe', 'genre', 'description', 
                   'total', 'hommes', 'femmes', 'suisses', 'étrangers')
 column_types <- c('text', 'text', 'text', 'numeric', 'text', 
